@@ -171,23 +171,13 @@
                     </div>
                   </li>
                   <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-                    <label class="badge badge-light-primary">8</label><a class="sidebar-link sidebar-title" href="#">
+                    <label class="badge badge-light-primary">7</label><a class="sidebar-link sidebar-title" href="#">
                       <svg class="stroke-icon">
                         <use href="../assets/svg/icon-sprite.svg#stroke-home"></use>
                       </svg>
                       <svg class="fill-icon">
                         <use href="../assets/svg/icon-sprite.svg#fill-home"></use>
-                      </svg><span class="lan-3">Dashboard          </span></a>
-                    <ul class="sidebar-submenu">
-                      <li><a class="lan-4" href="index.html">Default</a></li>
-                      <li><a class="lan-5" href="dashboard-02.html">Ecommerce</a></li>
-                      <li><a href="dashboard-03.html">Online course</a></li>
-                      <li><a href="dashboard-04.html">Crypto</a></li>
-                      <li><a href="dashboard-05.html">Social</a></li>
-                      <li><a href="dashboard-06.html">NFT</a></li>
-                      <li> <a href="dashboard-07.html">School management</a></li>
-                      <li> <a href="dashboard-08.html">POS</a></li>
-                    </ul>
+                      </svg><span>Dashboard</span></a>
                   </li>
                   <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
                       <svg class="stroke-icon">
@@ -195,7 +185,7 @@
                       </svg>
                       <svg class="fill-icon">
                         <use href="../assets/svg/icon-sprite.svg#fill-widget"></use>
-                      </svg><span class="lan-6">Widgets</span></a>
+                      </svg><span>Widgets</span></a>
                     <ul class="sidebar-submenu">
                       <li><a href="general-widget.html">General</a></li>
                       <li><a href="chart-widget.html">Chart</a></li>
@@ -806,7 +796,7 @@
                   <div class="col-sm-12">
                     <div class="card o-hidden welcome-card">            
                       <div class="card-body">
-                        <h4 class="mb-3 mt-1 f-w-500 mb-0 f-22">Hello Jashmin<span> <img src="../assets/images/dashboard-3/hand.svg" alt="hand vector"></span></h4>
+                        <h4 class="mb-3 mt-1 f-w-500 mb-0 f-22">Hey, <span id="cardPlaceholder">Name</span>!  <span><img src="../assets/images/dashboard-3/hand.svg" alt="hand vector"></span></h4>
                         <p>Learn something new every day with world's best courses.Free online courses available.</p>
                       </div><img class="welcome-img" src="../assets/images/dashboard-3/widget.svg" alt="search image">
                     </div>
@@ -1182,22 +1172,6 @@
     <!-- Theme js-->
     <script src="../assets/js/script.js"></script>
     <script>
-        // Add this script to dynamically set the user's name
-        document.addEventListener('DOMContentLoaded', function () {
-            // Fetch user data from the server
-            fetch('/user')
-                .then(response => response.json())
-                .then(data => {
-                    var usernamePlaceholder = document.getElementById('usernamePlaceholder');
-                    if (usernamePlaceholder) {
-                        // Update the user's name in the UI
-                        usernamePlaceholder.innerText = data.user ? data.user.name : 'Guest';
-                    }
-                })
-                .catch(error => console.error('Error fetching user data:', error));
-        });
-    </script>
-    <script>
         // Add this script to dynamically set the user's name and profile picture
         document.addEventListener('DOMContentLoaded', function () {
             // Fetch user data from the server
@@ -1205,11 +1179,17 @@
                 .then(response => response.json())
                 .then(data => {
                     var usernamePlaceholder = document.getElementById('usernamePlaceholder');
+                    var cardPlaceholder = document.getElementById('cardPlaceholder')
                     var profilePicture = document.getElementById('profilePicture');
                     
                     if (usernamePlaceholder) {
                         // Update the user's name in the UI
                         usernamePlaceholder.innerText = data.user ? data.user.name : 'Guest';
+                    }
+
+                    if (cardPlaceholder) {
+                        // Update the user's name in the UI
+                        cardPlaceholder.innerText = data.user ? data.user.name : 'Name';
                     }
                     
                     if (profilePicture) {
