@@ -3,6 +3,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mysql = require('mysql2/promise');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: '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', resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+
 
 // Passport Google Strategy for OAuth 2.0 authentication
 passport.use(new GoogleStrategy(
@@ -70,8 +73,42 @@ const isAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.redirect('/');
+  res.redirect('/login.html'); // Redirect to login page if not authenticated
 };
+
+// Add this route to handle user data request
+app.get('/user', isAuthenticated, (req, res) => {
+  res.json({ user: req.user || null });
+});
+
+// Dashboard route
+app.get('/index.html', isAuthenticated, (req, res) => {
+  // Serve the modified index.html file with the user's name
+  res.sendFile(path.join(__dirname, '/public/index.html'));
+});
+
+// Onboarding route
+app.get('/onboarding.html', isAuthenticated, async (req, res) => {
+  // Serve the modified onboarding.html file with the user's name
+  res.sendFile(path.join(__dirname, '/public/onboarding.html'));
+});
+
+// Dashboard route (if user enters '/')
+app.get('/', isAuthenticated, (req, res) => {
+  // Redirect to the dashboard
+  res.redirect('/index.html');
+});
+
+// Logout route
+app.get('/logout', (req, res) => {
+  req.logout((err) => {
+      if (err) {
+          return res.send('Error logging out');
+      }
+      res.redirect('/login.html');
+  });
+});
+
 
 // Serve static files from the 'public' folder
 app.use(express.static('public'));
@@ -83,36 +120,11 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
-    // Redirect to onboarding or dashboard based on first login
-    const redirectPath = req.user.first_login ? '/onboarding.html' : '/dashboard';
+    // Redirect to onboarding or index (dashboard) based on first login
+    const redirectPath = req.user.first_login ? '/onboarding.html' : '/index.html';
     res.redirect(redirectPath);
   }
 );
-
-// Dashboard route
-app.get('/dashboard', isAuthenticated, (req, res) => {
-  if (req.isAuthenticated()) {
-    res.send(`
-      <h1>Welcome to the Dashboard, ${req.user.name || 'Google User'}!</h1>
-      <img src="${req.user.profile_picture}" alt="Profile Picture">
-      <br>
-      <a href="/logout">Logout</a>
-    `);
-  } else {
-    res.redirect('/');
-  }
-});
-
-// Logout route
-app.get('/logout', (req, res) => {
-    req.logout((err) => {
-      if (err) {
-        return res.send('Error logging out');
-      }
-      res.redirect('/login.html');
-    });
-  });
-  
 
 // Start the server
 app.listen(PORT, () => {

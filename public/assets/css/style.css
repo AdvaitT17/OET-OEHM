@@ -373,6 +373,11 @@ svg.f-light {
   padding-left: 50px;
 }
 
+.profile-picture {
+  width: 35px;
+  height: 35px;
+}
+
 /*====== Padding-left css ends ======*/
 /*====== Padding-top css starts ======*/
 .p-t-0 {
