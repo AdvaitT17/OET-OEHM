@@ -1,0 +1,191 @@
+.dashboard-select{
+	&.style-1{
+		background: transparent;
+		border-color:#A098AE;
+		font-weight: 500;
+		color:$headings-color;
+		margin: 0 1rem;
+		
+		&:after{
+			border-color:#A098AE;
+			right:0;
+
+		}
+		@include respond ('phone'){
+			height: 2.5rem;
+			padding-left: .75rem;
+			line-height: 2.8;
+			font-size: .85rem;
+		}
+	}
+}
+.timeline-active{
+	li{
+		position:relative;
+		padding:1.25rem 0;
+		.time{
+			padding: 0.5rem 0rem;
+			background:$white;
+			display: block;
+			position: relative;
+			z-index: 1;
+			color:#A098AE;
+			font-size: 14px;
+			@include respond ('phone'){
+				font-size:.75rem!important;
+			}
+		}
+		&:before{
+			top: 3.875rem;
+			bottom: 0;
+			position: absolute;
+			content: " ";
+			width: 0.125rem;
+			height: calc(100% - 1.875rem);
+			left: 1.4625rem;
+			margin-right: -0.0938rem;
+			background: #EEEE;
+		}
+		&:last-child{
+			&:before{
+				content:none;
+			}
+		}
+		@include respond ('phone'){
+			padding: 0.5rem 0;
+			&:before{
+				top: 3rem;
+			}
+		}		
+		
+	}
+	.panel{
+		margin-left:1.875rem;
+		flex: 1;
+		.badge{
+			margin-right:0.625rem;
+			height: 3rem;
+			width: 3rem;
+			min-width: 3rem;
+			padding: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			@include respond ('phone'){
+				height:2.5rem;
+				width:2.5rem;
+				min-width:2.5rem;
+				font-size:1rem;
+			}
+		}
+		.timeline-panel{
+			h4{
+				font-size:1rem;
+				font-weight: 500;
+				@include respond ('phone'){
+					font-size: 0.875rem;
+				}
+				
+			}
+		}
+	}
+	.modulel{
+		display: inline-flex;
+		@include respond ('phone'){
+			padding: 0.5rem 0.5rem;
+			&>div{
+				align-items:center;
+			}
+			
+		}
+		.sub-module{
+			background: #f9f9f9;
+			padding: 0.8125rem 1.0625rem;
+			border-radius: 0.625rem;
+			margin: 1.0625rem 0;
+			@include respond ('phone'){
+				margin: 0.4625rem 0;
+			}
+			h4{
+				line-height:1;
+				font-size:.75rem!important;
+			}
+			span{
+				font-size:.7rem;
+			}
+			&:hover{
+				background:var(--primary);
+				span,h4{
+					color:$white;
+				}
+				span{
+					svg{
+						path{
+							fill:var(--primary);
+						}
+					}
+				}
+			}
+		}
+	}
+	&.style-4{
+		
+		li{
+			padding: 0.375rem 0;
+			&:before{
+				content:none;
+			}
+			.time-1{
+				color:#A098AE;
+			}
+			&:hover{
+				.timeline-panel{
+					h4{
+						color:var(--primary);
+					}
+				}
+			}
+		}
+		.panel{
+			display: flex;
+			align-items: center;
+			.line-color{
+				width:0.25rem;
+				height:65%;
+				border-radius:4px;
+				position: absolute;
+			}
+			.timeline-panel{
+				margin-left: 1.25rem;
+				display: block;
+			}
+		}
+	}
+	
+}
+.widget-timeline{
+	.side-border{
+		position:relative;
+		&:after{
+			position: absolute;
+			content: "";
+			width: 100%;
+			border-top:0.0625rem solid #DBDBDB;
+			top: 0.75rem;
+			left: 0;
+		}
+		h4{
+			background: white;
+			position: relative;
+			z-index: 2;
+			padding-right: 1.25rem;
+		}
+		.custom-dropdown{
+			background: white;
+			position: relative;
+			z-index: 2;
+			padding-left: 1.25rem;
+			margin-top: -7px;
+		}
+	}
+}

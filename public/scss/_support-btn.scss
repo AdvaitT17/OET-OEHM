@@ -1,0 +1,72 @@
+.DZ-theme-btn {
+	background-color: #fff;
+	border-radius: 40px;
+	bottom: 10px;
+	color: #fff;
+	display: table;
+	height: 50px;
+	left: 10px;
+	min-width: 50px;
+	position: fixed;
+	text-align: center;
+	z-index: 99999;
+    padding: 0 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	-webkit-transition: all 0.5s;
+	-ms-transition: all 0.5s;
+	transition: all 0.5s;
+	i {
+		font-size: 22px;
+		line-height: 50px;
+	}
+	&:hover {
+		color: #fff;
+		padding: 0 20px;
+		span {
+			opacity: 1;
+			letter-spacing: 1px;
+			padding-left: 10px;
+		}
+	}
+	span {
+		display: table-cell;
+		vertical-align: middle;
+		font-size: 16px;
+		letter-spacing: -15px;
+		opacity: 0;
+		line-height: 50px;
+		-webkit-transition: all 0.5s;
+		-ms-transition: all 0.5s;
+		transition: all 0.5s;
+		text-transform: uppercase;
+	}
+	svg {
+		fill: #fff;
+		width: 26px;
+		height: 26px;
+	}
+}
+.DZ-theme-btn.DZ-bt-support-now {
+	background: #1ebbf0;
+	background: -moz-linear-gradient(45deg, #1ebbf0 8%, #39dfaa 100%);
+	background: -webkit-linear-gradient(45deg, #1ebbf0 8%, #39dfaa 100%);
+	background: linear-gradient(45deg, #1ebbf0 8%, #39dfaa 100%);
+	bottom: 70px;
+}
+.DZ-theme-btn.DZ-bt-buy-now {
+	background: #1fdf61;
+	background: -moz-linear-gradient(top, #a3d179 0, #88ba46 100%);
+	background: -webkit-linear-gradient(top, #a3d179 0, #88ba46 100%);
+	background: linear-gradient(to bottom, #a3d179 0, #88ba46 100%);
+}
+.at-expanding-share-button[data-position=bottom-left] {
+	bottom: 130px !important;
+}
+[dir=rtl] {
+	.DZ-theme-btn {
+		right: 10px;
+		left: auto;
+	}
+}

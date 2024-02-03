@@ -1,0 +1,40 @@
+.courses-chart{
+	.ic-icon{
+		height: 2rem;
+		width: 2rem;
+		border-radius: 0.625rem;
+		background: $secondary;
+		text-align: center;
+		line-height: 2rem;
+		@include custommq ($max:1600px){
+			height:1.5rem;
+			width:1.5rem;
+			line-height:1.3rem;
+			border-radius:3px;
+		}
+	}
+}
+.pt-line{
+	margin-top: 1.5rem;
+}
+.work-ic{
+	height: 3.75rem;
+    width: 3.75rem;
+    border: 0.125rem solid #DBDBDB;
+    display: block;
+    text-align: center;
+    line-height: 3.4375rem;
+	border-radius:$radius;
+	@include respond ('phone'){
+		height: 2.8125rem;
+		width: 2.8125rem;
+		line-height: 2.5rem;
+	}
+	&:hover{
+		background:var(--rgba-primary-1);
+		border-color:var(--primary);
+	}
+}
+#earningtBar{
+	margin-top: -1.4rem;
+}

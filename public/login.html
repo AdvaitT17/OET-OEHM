@@ -1,83 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="keywords" content="">
-    <meta name="author" content="pixelstrap">
-    <link rel="icon" href="/assets/images/favicon.png" type="image/x-icon">
-    <link rel="shortcut icon" href="/assets/images/favicon.png" type="image/x-icon">
-    <title>Somaiya OET-OEHM Portal | Login</title>
-    <!-- Google font-->
-    <link href="https://fonts.googleapis.com/css?family=Rubik:400,400i,500,500i,700,700i&amp;display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="/assets/css/font-awesome.css">
-    <!-- ico-font-->
-    <link rel="stylesheet" type="text/css" href="/assets/css/vendors/icofont.css">
-    <!-- Themify icon-->
-    <link rel="stylesheet" type="text/css" href="/assets/css/vendors/themify.css">
-    <!-- Flag icon-->
-    <link rel="stylesheet" type="text/css" href="/assets/css/vendors/flag-icon.css">
-    <!-- Feather icon-->
-    <link rel="stylesheet" type="text/css" href="/assets/css/vendors/feather-icon.css">
-    <!-- Plugins css start-->
-    <!-- Plugins css Ends-->
-    <!-- Bootstrap css-->
-    <link rel="stylesheet" type="text/css" href="/assets/css/vendors/bootstrap.css">
-    <!-- App css-->
-    <link rel="stylesheet" type="text/css" href="/assets/css/style.css">
-    <link id="color" rel="stylesheet" href="/assets/css/color-1.css" media="screen">
-    <!-- Responsive css-->
-    <link rel="stylesheet" type="text/css" href="/assets/css/responsive.css">
-</head>
-<body>
-    <!-- login page start-->
-    <div class="container-fluid p-0">
-        <div class="row m-0">
-            <div class="col-12 p-0">    
-                <div class="login-card login-dark">
-                    <div>
-                        <div><a class="logo" href="index.html"><img class="img-fluid for-light" src="/assets/svg/KJSCE-logo.svg" alt="loginpage"><img class="img-fluid for-dark" src="/assets/images/logo/logo_dark.png" alt="loginpage"></a></div>
-                        <div class="login-main"> 
-                            <form class="theme-form" action="/login" method="post">
-                                <h4>Sign in to account</h4>
-                                <p>Enter your Somaiya ID to login</p>
-                                <div class="form-group">
-                                    <label class="col-form-label">Somaiya ID</label>
-                                    <input class="form-control" type="email" name="email" required="" placeholder="student@somaiya.edu">
-                                </div>
-                                <div class="form-group mb-0">
-                                    <div class="text-end mt-3">
-                                        <button class="btn btn-primary btn-block w-100" type="submit">Sign in</button>
-                                    </div>
-                                </div>
-                                <h6 class="text-muted mt-4 or">Or Sign In with</h6>
-                                <div class="social mt-4">
-                                    <!-- Add Google Sign-In button -->
-                                    <a href="/auth/google" class="btn btn-danger btn-block w-100"><i class="icofont-google"></i> Sign in with Google</a>
-                                </div>
-                                <br>
-                            </form>
+<html lang="en" class="h-100">
+   <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="keywords" content="" />
+      <meta name="author" content="" />
+      <meta name="robots" content="" />
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="" />
+      <meta name="format-detection" content="telephone=no">
+      <title>Login | KJ Somaiya OET-OEHM Portal</title>
+      <link rel="shortcut icon" type="image/png" href="images/favicon.png" />
+      <link href="./css/style.css" rel="stylesheet">
+   </head>
+   <body class="body  h-100">
+      <div class="container h-100">
+         <div class="row h-100 align-items-center justify-contain-center">
+            <div class="col-xl-12 mt-3">
+               <div class="text-center my-5">
+                  <a href="/"><img height="100%" src="images/logo.svg" alt="KJSCE"></a>
+               </div>
+               <div class="card">
+                  <div class="card-body p-0">
+                     <div class="row m-0">
+                        <div class="col-xl-6 col-md-6 sign text-center">
+                           <div>
+                              <img src="https://myaccount.somaiya.edu/img/BG-login.jpg" class="education-img" width="100%" height="100%"></img>
+                           </div>
                         </div>
-                    </div>
-                </div>
+                        <div class="col-xl-6 col-md-6">
+                           <div class="sign-in-your">
+                              <h4 class="fs-20 font-w800 text-black">Sign in to your account</h4>
+                              <span>Please enter your SVV Net ID & Password</span>
+                              <div class="login-social">
+                                 <a href="/auth/google" class="btn font-w800 d-block my-4"><i class="fab fa-google me-2 text-primary"></i>Login with Google</a>
+                              </div>
+                              <form action="index.html">
+                                 <div class="mb-3">
+                                    <label class="mb-1"><strong>Email</strong></label>
+                                    <input type="email" class="form-control" value="SVV Net ID">
+                                 </div>
+                                 <div class="mb-3">
+                                    <label class="mb-1"><strong>Password</strong></label>
+                                    <input type="password" class="form-control" value="Password">
+                                 </div>
+                                 <div class="row d-flex justify-content-between mt-4 mb-2">
+                                    <div class="mb-3">
+                                       <div class="form-check custom-checkbox ms-1">
+                                          <input type="checkbox" class="form-check-input" id="basic_checkbox_1">
+                                          <label class="form-check-label" for="basic_checkbox_1">Remember Me</label>
+                                       </div>
+                                    </div>
+                                 </div>
+                                 <div class="text-center">
+                                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                                 </div>
+                              </form>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
             </div>
-        </div>
-        <!-- latest jquery-->
-        <script src="/assets/js/jquery.min.js"></script>
-        <!-- Bootstrap js-->
-        <script src="/assets/js/bootstrap/bootstrap.bundle.min.js"></script>
-        <!-- feather icon js-->
-        <script src="/assets/js/icons/feather-icon/feather.min.js"></script>
-        <script src="/assets/js/icons/feather-icon/feather-icon.js"></script>
-        <!-- ... (your existing script tags) ... -->
-        <script src="../assets/js/config.js"></script>
-        <!-- Plugins JS start-->
-        <!-- Plugins JS Ends-->
-        <!-- Theme js-->
-        <script src="../assets/js/script.js"></script>
-    </div>
-</body>
+            <div class="footer">
+               <div class="copyright">
+                  <p>Copyright © KJ Somaiya College Of Engineering</p>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!--**********************************
+         Scripts
+         ***********************************-->
+      <!-- Required vendors -->
+      <script src="./vendor/global/global.min.js"></script>
+      <script src="./js/custom.js"></script>
+      <script src="./js/dlabnav-init.js"></script>
+      <script src="./js/styleSwitcher.js"></script>
+   </body>
 </html>

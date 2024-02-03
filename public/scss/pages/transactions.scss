@@ -1,0 +1,113 @@
+.student-earning{
+	margin-top:25px;
+	h4{
+		font-size:20px;
+	}
+}
+.total-order{
+	h4{
+		font-size:20px;
+	}
+}
+
+//instructor-liveclass
+
+
+.live-img{
+	img{
+		height: 604px;
+		width: 100%;
+		object-fit:cover;
+		border-radius:$radius;
+		@include respond ('phone'){
+			height: 195px;
+		}
+
+	}
+	.live-tag{
+		height: 48px;
+		width: 90px;
+		border-radius: 8px;
+		background: #37455780;
+		text-align: center;
+		line-height: 50px;
+		color: white;
+		position: absolute;
+		top: 30px;
+		left: 30px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		@include respond ('phone'){
+			height: 30px;
+			line-height: 30px;
+			left: 8px;
+			width: 60px;
+		}
+		
+		
+	}
+}
+.profile-img{
+	img,
+	span{
+		width: 40px;
+		height: 40px;
+		object-fit: cover;
+		border-radius: 0.625rem;
+		border: 4px solid #ffff;
+		line-height: 34px;
+		text-align: center;
+		margin-left: -7px;
+		&:first-child{
+			margin-left: 0;
+		}
+		&:hover{
+			-webkit-animation-name: zoomIn;
+			opacity: 1;
+			animation-duration: 1.5s;
+			@include transitionMedium;
+		}
+	}
+}
+.miac{
+	display: inline-block;
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    line-height: 46px;
+	border-radius:$radius;
+    border: 1px solid #DBDBDB;
+    margin-left: 16px;
+	@include transitionMedium;
+	cursor:pointer;
+	&:first-child{
+		margin-left:0;
+	}
+	svg{
+		width:18px;
+	}
+	@include custommq($max: 100rem) {
+		width: 40px;
+		height: 40px;
+		line-height: 33px;
+		svg{
+			width:16px;
+		}
+	}
+	@include respond ('phone'){
+		&:first-child{
+			margin-left:0;
+		}
+	}
+	&:hover{
+		background:var(--primary);
+		border-color:var(--primary);
+		svg{
+			path{
+				fill:$white;
+				@include transitionMedium;
+			}
+		}
+	}
+}
