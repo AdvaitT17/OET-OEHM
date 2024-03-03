@@ -10,7 +10,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 const dbConfig = {
-  host: '13.234.60.137',
+  host: '35.200.243.194',
   user: 'kjsce_admin',
   password: 'admin@kjsce',
   database: 'oet-oehm-student',
@@ -71,69 +71,6 @@ app.get('/api/courses', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-// Route to save selected courses
-app.post('/api/saveSelectedCourses', async (req, res) => {
-  try {
-    const { selectedCourses, userEmail } = req.body;
-
-    // Validate the received data
-    if (!selectedCourses || !Array.isArray(selectedCourses) || selectedCourses.length === 0 || !userEmail) {
-      return res.status(400).json({ error: 'Invalid request data' });
-    }
-
-    // Calculate total hours of selected courses (if needed)
-    // Assuming you have a function to calculate total hours
-    const totalHours = await calculateTotalHours(selectedCourses);
-
-    // Check if total hours are within the specified range
-    if (totalHours < 30 || totalHours > 45) {
-      return res.status(400).json({ error: 'Total hours of selected courses must be between 30 and 45.' });
-    }
-
-    // Save selected courses to the database
-    await saveSelectedCoursesToDatabase(userEmail, selectedCourses);
-
-    // Respond with success message
-    res.json({ message: 'Selected courses saved successfully.' });
-  } catch (error) {
-    console.error('Error saving selected courses:', error);
-    res.status(500).json({ error: 'Failed to save selected courses. Please try again.' });
-  }
-});
-
-// Function to calculate total hours of selected courses
-async function calculateTotalHours(selectedCourses) {
-  // Implement your logic to calculate total hours
-  // Example: Iterate through selectedCourses, fetch hours for each course from the database, and sum them
-  let totalHours = 0;
-  for (const courseId of selectedCourses) {
-    // Fetch hours for courseId from the database
-    const course = await fetchCourseById(courseId);
-    if (course) {
-      totalHours += course.hours;
-    }
-  }
-  return totalHours;
-}
-
-// Function to fetch course by ID from the database
-async function fetchCourseById(courseId) {
-  // Implement your logic to fetch course by ID from the database
-  // Example: Query the courses_online table to fetch the course by its ID
-  // Replace this with your actual database query
-  const [rows] = await db.query('SELECT * FROM courses_online WHERE course_id = ?', [courseId]);
-  return rows[0]; // Assuming course_id is unique and only one course is returned
-}
-
-// Function to save selected courses to the database
-async function saveSelectedCoursesToDatabase(userEmail, selectedCourses) {
-  // Implement your logic to insert selected courses into the database
-  // Example: Insert each selected course into the students_online table
-  for (const courseId of selectedCourses) {
-    await db.query('INSERT INTO students_online (email, course_id) VALUES (?, ?)', [userEmail, courseId]);
-  }
-}
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));

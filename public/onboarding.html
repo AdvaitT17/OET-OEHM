@@ -178,7 +178,6 @@
                                                       <h4 class="card-title">OET Online Course Selection</h4>
                                                   </div>
                                              <div class="card-body">
-                                                <form id="courseSelectionForm">
                                                 <div class="table-responsive">
                                                    <table id="OETCoursesTable" class="display" style="width:100%">
                                                       <thead>
@@ -211,9 +210,7 @@
                                     </div>
                                        <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
                                        <a href="javascript:;" class="form-wizard-next-btn float-right">Next</a>
-                                       <button type="submit" id="submitButton">Submit</button>
                                     </div>
-                                 </form>
                                  </fieldset>	
                                  <fieldset class="wizard-fieldset">
                                     <h5>Bank Information</h5>
@@ -292,13 +289,14 @@
                                  </fieldset>	
                               </form>
                            </div>
-                  </section>
+                     </section>
                      </div>
                   </div>
                </div>
             </div>
          </div>
       </div>
+   </div>   
       <!--**********************************
          Main wrapper end
          ***********************************-->
@@ -318,74 +316,47 @@
       <script src="vendor/jquery-nice-select/js/jquery.nice-select.min.js"></script>
       <script src="./js/styleSwitcher.js"></script>
       <script>
-$(document).ready(function() {
-    // Handle form submission
-    $('#courseSelectionForm').on('submit', function(event) {
-        event.preventDefault(); // Prevent default form submission
-
-        // Gather selected course IDs
-        const selectedCourses = [];
-        $('#OETCoursesTable tbody tr.selected').each(function() {
-            selectedCourses.push($(this).data('course-id'));
-        });
-
-        // Validate selected courses
-        if (selectedCourses.length === 0) {
-            alert('Please select at least one course.');
-            return;
-        }
-
-        // Gather user's email (replace with your method to retrieve user's email)
-        const userEmail = 'user@example.com';
-
-        // Send data to server via AJAX
-        $.ajax({
-            url: '/api/saveSelectedCourses',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ selectedCourses: selectedCourses, userEmail: userEmail }),
-            success: function(response) {
-                alert(response.message); // Display success message
-                location.reload(); // Reload the page or redirect as needed
-            },
-            error: function(xhr, status, error) {
-                alert('Error: ' + xhr.responseText); // Display error message
+         $(document).ready(function() {
+    // Initialize DataTable with responsive option
+    const dataTable = $('#OETCoursesTable').DataTable({
+        columns: [
+            { data: 'course_name' },
+            { data: 'university' },
+            { data: 'domain' },
+            { data: 'difficulty_level' },
+            { data: 'language' },
+            { data: 'hours' }
+        ],
+        language: {
+            paginate: {
+                next: '<i class="fa fa-angle-double-right" aria-hidden="true"></i>',
+                previous: '<i class="fa fa-angle-double-left" aria-hidden="true"></i>'
             }
-        });
+        },
+        responsive: true // Enable responsive mode
     });
 
-    // Populate course data in the table (fetch data from server as needed)
-    // Example AJAX request:
-    $.ajax({
-        url: '/api/courses',
-        method: 'GET',
-        success: function(data) {
+    // Fetch course data from the server
+    fetch('/api/courses')
+        .then(response => response.json())
+        .then(data => {
             // Populate table with fetched data
-            $.each(data, function(index, course) {
-                // Append row to table
-                $('#OETCoursesTable tbody').append(`<tr data-course-id="${course.course_id}">
-                    <td>${course.course_name}</td>
-                    <td>${course.university}</td>
-                    <td>${course.domain}</td>
-                    <td>${course.difficulty_level}</td>
-                    <td>${course.language}</td>
-                    <td>${course.hours}</td>
-                </tr>`);
-            });
-        },
-        error: function(xhr, status, error) {
-            console.error('Error fetching courses:', error);
-        }
-    });
+            dataTable.rows.add(data).draw();
+        })
+        .catch(error => console.error('Error fetching courses:', error));
 
     // Handle row selection
     $('#OETCoursesTable tbody').on('click', 'tr', function () {
         $(this).toggleClass('selected');
     });
+
+    // Handle button click to get selected rows count
+    $('#button').on('click', function () {
+        const selectedRowCount = dataTable.rows('.selected').count();
+        alert(selectedRowCount + ' row(s) selected');
+    });
 });
-
-
-       </script>
+      </script>
       <script>
          // Add this script to dynamically set the user's profile picture
             document.addEventListener('DOMContentLoaded', function () {
