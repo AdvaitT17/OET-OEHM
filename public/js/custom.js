@@ -460,7 +460,6 @@
 		load:function(){
 			handlePreloader();
 			handleNiceSelect();
-			handleSupport();
 		},
 		
 		resize:function(){
