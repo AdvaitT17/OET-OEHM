@@ -14,6 +14,7 @@ const dbConfig = {
   user: 'kjsce_admin',
   password: 'admin@kjsce',
   database: 'oet-oehm-student',
+  connectTimeout: 60000, // 60 seconds
 };
 const pool = mysql.createPool(dbConfig);
 
