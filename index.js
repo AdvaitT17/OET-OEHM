@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -10,22 +12,22 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 const dbConfig = {
-  host: '35.200.243.194',
-  user: 'kjsce_admin',
-  password: 'admin@kjsce',
-  database: 'oet-oehm-student',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
 };
 const pool = mysql.createPool(dbConfig);
 
 app.use(express.urlencoded({ extended: true }));
-app.use(session({ secret: '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', resave: false, saveUninitialized: false }));
+app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new GoogleStrategy({
-  clientID: '431516285171-jufcjr2ra8h8k6vtt8ocbsqjp56dm3h2.apps.googleusercontent.com',
-  clientSecret: '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',
-  callbackURL: 'http://localhost:3000/auth/google/callback',
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.CALLBACK_URL,
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const [rows] = await pool.query(`
