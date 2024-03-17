@@ -16,7 +16,9 @@ const dbConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
+  connectTimeout: 60000, // 60 seconds
 };
+
 const pool = mysql.createPool(dbConfig);
 
 app.use(express.urlencoded({ extended: true }));
@@ -63,16 +65,15 @@ const isAuthenticated = (req, res, next) => {
   req.isAuthenticated() ? next() : res.redirect('/login.html');
 };
 
-// Middleware to handle timeout errors
-const handleTimeout = (err, req, res, next) => {
+// Global error handling middleware
+app.use((err, req, res, next) => {
   if (err.code === 'ETIMEDOUT') {
     res.redirect('/login.html'); // Redirect to login page on timeout
   } else {
-    next(err); // Pass other errors to the default error handler
+    console.error('Unhandled error:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-};
-
-app.use(handleTimeout); // Register the handleTimeout middleware
+});
 
 // Route to fetch course data from the database
 app.get('/api/courses', async (req, res) => {
@@ -84,6 +85,43 @@ app.get('/api/courses', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+// Refactored route for updating user data
+app.post('/updateUserData', isAuthenticated, async (req, res) => {
+  const { field, value } = req.body;
+  const userEmail = req.user.email;
+
+  try {
+    // Validate the field and value
+    const isValidValue = await isValidEnumValue('users', field, value);
+    if (!isValidValue) {
+      return res.status(400).json({ success: false, message: `Invalid value for ${field}` });
+    }
+
+    // Update the specified field in the database
+    await pool.query(`UPDATE users SET ${field} = ? WHERE email = ?`, [value, userEmail]);
+    res.json({ success: true, message: `${field} updated successfully` });
+  } catch (error) {
+    console.error(`Error updating ${field}:`, error);
+    res.status(500).json({ success: false, message: `Failed to update ${field}` });
+  }
+});
+
+// Function to check if a value is valid for an ENUM field
+async function isValidEnumValue(tableName, fieldName, value) {
+  try {
+    const [rows] = await pool.query(`
+      SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_NAME = ? AND COLUMN_NAME = ?;
+    `, [tableName, fieldName]);
+
+    const enumValues = rows[0].COLUMN_TYPE.match(/'([^']+)'/g).map(value => value.slice(1, -1));
+    return enumValues.includes(value);
+  } catch (error) {
+    console.error('Error checking enum value:', error);
+    return false;
+  }
+}
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -123,41 +161,6 @@ app.post('/updateRollNumber', isAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update roll number' });
   }
 });
-
-app.post('/updateUserData', isAuthenticated, async (req, res) => {
-  const field = req.body.field;
-  const value = req.body.value;
-  const userEmail = req.user.email;
-
-  try {
-    // Check if the value is valid for the ENUM field
-    const isValidValue = await isValidEnumValue(field, value);
-    if (!isValidValue) {
-      return res.status(400).json({ success: false, message: `Invalid value for ${field}` });
-    }
-
-    // Update the specified field in the database
-    await pool.query(`UPDATE users SET ${field} = ? WHERE email = ?`, [value, userEmail]);
-    res.json({ success: true, message: `${field} updated successfully` });
-  } catch (error) {
-    console.error(`Error updating ${field}:`, error);
-    res.status(500).json({ success: false, message: `Failed to update ${field}` });
-  }
-});
-
-async function isValidEnumValue(field, value) {
-  // Query the INFORMATION_SCHEMA.COLUMNS table to get the possible ENUM values for the specified field
-  const [rows] = await pool.query(`
-      SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_NAME = 'users' AND COLUMN_NAME = ?;
-  `, [field]);
-
-  // Extract the ENUM values from the column type definition
-  const enumValues = rows[0].COLUMN_TYPE.match(/'([^']+)'/g).map(value => value.slice(1, -1));
-
-  // Check if the provided value exists in the ENUM values
-  return enumValues.includes(value);
-}
 
 // Route to serve index.html
 app.get('/index.html', isAuthenticated, (req, res) => {
