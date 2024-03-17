@@ -213,75 +213,49 @@
                                     </div>
                                  </fieldset>	
                                  <fieldset class="wizard-fieldset">
-                                    <h5>Bank Information</h5>
-                                    <div class="form-group clearfix">
+                                    <div class="form-group clearfix">        
+                                       <div class="row">
+                                          <div class="col-12">
+                                              <div class="card">
+                                                  <div class="card-header">
+                                                      <h4 class="card-title">OEHM Online Course Selection</h4>
+                                                  </div>
+                                             <div class="card-body">
+                                                <div class="table-responsive">
+                                                   <table id="OEHMCoursesTable" class="display" style="width:100%">
+                                                      <thead>
+                                                            <tr>
+                                                               <th>Course</th>
+                                                               <th>University</th>
+                                                               <th>Domain</th>
+                                                               <th>Difficulty</th>
+                                                               <th>Language</th>
+                                                               <th>Hours</th>
+                                                            </tr>
+                                                      </thead>
+                                                      <tbody id="courseTableBody">
+                                                      </tbody>
+                                                      <tfoot>
+                                                            <tr>
+                                                               <th>Course</th>
+                                                               <th>University</th>
+                                                               <th>Domain</th>
+                                                               <th>Difficulty</th>
+                                                               <th>Language</th>
+                                                               <th>Hours</th>
+                                                            </tr>
+                                                      </tfoot>
+                                                   </table>
+                                                </div>
+                                             </div>
+                                          </div>
+                                       </div> 
+                                    </div>
                                        <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
                                        <a href="javascript:;" class="form-wizard-next-btn float-right">Next</a>
                                     </div>
                                  </fieldset>	
                                  <fieldset class="wizard-fieldset">
-                                    <h5>Payment Information</h5>
-                                    <div class="form-group">
-                                       Payment Type
-                                       <div class="wizard-form-radio">
-                                          <input name="radio-name" id="mastercard" type="radio">
-                                          <label for="mastercard">Master Card</label>
-                                       </div>
-                                       <div class="wizard-form-radio">
-                                          <input name="radio-name" id="visacard" type="radio">
-                                          <label for="visacard">Visa Card</label>
-                                       </div>
-                                    </div>
-                                    <div class="form-group">
-                                       <input type="text" class="form-control wizard-required" id="honame">
-                                       <label for="honame" class="wizard-form-text-label">Holder Name*</label>
-                                       <div class="wizard-form-error"></div>
-                                    </div>
-                                    <div class="row">
-                                       <div class="col-lg-6 col-md-6 col-sm-6">
-                                          <div class="form-group">
-                                             <input type="text" class="form-control wizard-required" id="cardname">
-                                             <label for="cardname" class="wizard-form-text-label">Card Number*</label>
-                                             <div class="wizard-form-error"></div>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-6 col-md-6 col-sm-6">
-                                          <div class="form-group">
-                                             <input type="text" class="form-control wizard-required" id="cvc">
-                                             <label for="cvc" class="wizard-form-text-label">CVC*</label>
-                                             <div class="wizard-form-error"></div>
-                                          </div>
-                                       </div>
-                                    </div>
-                                    <div class="row">
-                                       <div class="col-12">Branch</div>
-                                       <div class="col-lg-4 col-md-4 col-sm-4">
-                                          <div class="form-group">
-                                             <select class="form-control">
-                                                <option value="">IT</option>
-                                                <option value="">COMPS</option>
-                                                <option value="">EXTC</option>
-                                             </select>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-4 col-md-4 col-sm-4">
-                                          <div class="col-12">Semester</div>
-                                          <div class="form-group">
-                                             <select class="form-control">
-                                                <option value="">V</option>
-                                                <option value="">VI</option>
-                                                <option value="">VII</option>
-                                             </select>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-4 col-md-4 col-sm-4">
-                                          <div class="form-group">
-                                             <select class="form-control">
-                                                <option value="">Years</option>
-                                             </select>
-                                          </div>
-                                       </div>
-                                    </div>
                                     <div class="form-group clearfix">
                                        <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
                                        <a href="javascript:;" class="form-wizard-submit float-right">Submit</a>
@@ -347,6 +321,48 @@
 
     // Handle row selection
     $('#OETCoursesTable tbody').on('click', 'tr', function () {
+        $(this).toggleClass('selected');
+    });
+
+    // Handle button click to get selected rows count
+    $('#button').on('click', function () {
+        const selectedRowCount = dataTable.rows('.selected').count();
+        alert(selectedRowCount + ' row(s) selected');
+    });
+});
+      </script>
+      <script>
+         $(document).ready(function() {
+    // Initialize DataTable with responsive option
+    const dataTable = $('#OEHMCoursesTable').DataTable({
+        columns: [
+            { data: 'course_name' },
+            { data: 'university' },
+            { data: 'domain' },
+            { data: 'difficulty_level' },
+            { data: 'language' },
+            { data: 'hours' }
+        ],
+        language: {
+            paginate: {
+                next: '<i class="fa fa-angle-double-right" aria-hidden="true"></i>',
+                previous: '<i class="fa fa-angle-double-left" aria-hidden="true"></i>'
+            }
+        },
+        responsive: true // Enable responsive mode
+    });
+
+    // Fetch course data from the server
+    fetch('/api/courses')
+        .then(response => response.json())
+        .then(data => {
+            // Populate table with fetched data
+            dataTable.rows.add(data).draw();
+        })
+        .catch(error => console.error('Error fetching courses:', error));
+
+    // Handle row selection
+    $('#OEHMCoursesTable tbody').on('click', 'tr', function () {
         $(this).toggleClass('selected');
     });
 

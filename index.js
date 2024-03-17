@@ -14,7 +14,6 @@ const dbConfig = {
   user: 'kjsce_admin',
   password: 'admin@kjsce',
   database: 'oet-oehm-student',
-  connectTimeout: 60000, // 60 seconds
 };
 const pool = mysql.createPool(dbConfig);
 
@@ -61,6 +60,17 @@ passport.deserializeUser(async (email, done) => {
 const isAuthenticated = (req, res, next) => {
   req.isAuthenticated() ? next() : res.redirect('/login.html');
 };
+
+// Middleware to handle timeout errors
+const handleTimeout = (err, req, res, next) => {
+  if (err.code === 'ETIMEDOUT') {
+    res.redirect('/login.html'); // Redirect to login page on timeout
+  } else {
+    next(err); // Pass other errors to the default error handler
+  }
+};
+
+app.use(handleTimeout); // Register the handleTimeout middleware
 
 // Route to fetch course data from the database
 app.get('/api/courses', async (req, res) => {
