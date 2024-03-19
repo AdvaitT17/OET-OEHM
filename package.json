@@ -6,30 +6,28 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "deploy": "gcloud preview app deploy"
+    "deploy": "gcloud app deploy"
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "browser-sync": "^3.0.2",
-    "gulp": "^4.0.2",
-    "gulp-sass": "^5.1.0",
-    "sass": "^1.54.4"
-  },
   "dependencies": {
     "autoprefixer": "^10.4.8",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
+    "express-validator": "^7.0.1",
     "firebase-admin": "^12.0.0",
-    "gulp-livereload": "^4.0.2",
-    "gulp-pug": "^5.0.0",
-    "livereload": "^0.9.3",
     "mysql2": "^3.9.0",
     "nodemailer": "^6.9.8",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0"
+  },
+  "devDependencies": {
+    "browser-sync": "^3.0.2",
+    "gulp": "^4.0.2",
+    "gulp-sass": "^5.1.0",
+    "sass": "^1.54.4"
   }
 }

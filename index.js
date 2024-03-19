@@ -6,6 +6,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mysql = require('mysql2/promise');
 const path = require('path');
+const { body, validationResult } = require('express-validator');
 
 const app = express();
 app.use(express.json());
@@ -87,7 +88,15 @@ app.get('/api/courses', async (req, res) => {
 });
 
 // Refactored route for updating user data
-app.post('/updateUserData', isAuthenticated, async (req, res) => {
+app.post('/updateUserData', isAuthenticated, [
+  body('field').isString().notEmpty().withMessage('Field is required'),
+  body('value').isString().notEmpty().withMessage('Value is required'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const { field, value } = req.body;
   const userEmail = req.user.email;
 
@@ -148,7 +157,14 @@ app.get('/onboarding.html', isAuthenticated, async (req, res) => {
   }
 });
 
-app.post('/updateRollNumber', isAuthenticated, async (req, res) => {
+app.post('/updateRollNumber', isAuthenticated, [
+  body('rollNumber').isString().notEmpty().withMessage('Roll number is required'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const rollNumber = req.body.rollNumber;
   const userEmail = req.user.email;
 
