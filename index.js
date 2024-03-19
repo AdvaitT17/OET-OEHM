@@ -200,4 +200,4 @@ app.get('/auth/google/callback',
   (req, res) => res.redirect(req.user.first_login ? '/onboarding.html' : '/index.html')
 );
 
-app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
+module.exports = app;

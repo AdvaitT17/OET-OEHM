@@ -1,14 +1,12 @@
 {
   "name": "gulp_setup",
   "version": "1.0.0",
-  "description": "",
+  "description": "Express Node.js application deployed on Vercel",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "deploy": "gcloud app deploy"
   },
-  "author": "",
+  "author": "Advait Thakur",
   "license": "ISC",
   "dependencies": {
     "autoprefixer": "^10.4.8",
