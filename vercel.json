@@ -1,0 +1,8 @@
+{
+    "rewrites": [
+      { "source": "/auth/google", "destination": "/auth/google" },
+      { "source": "/auth/google/callback", "destination": "/auth/google/callback" },
+      { "source": "/logout", "destination": "/logout" },
+      { "source": "/(.*)", "destination": "/$1" }
+    ]
+  }
