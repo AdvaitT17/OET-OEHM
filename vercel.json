@@ -6,4 +6,3 @@
       { "source": "/(.*)", "destination": "/$1" }
     ]
   }
-  
