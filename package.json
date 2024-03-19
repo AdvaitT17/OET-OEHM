@@ -4,7 +4,7 @@
   "description": "Express Node.js application deployed on Vercel",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node index.js"
   },
   "author": "Advait Thakur",
   "license": "ISC",
