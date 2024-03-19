@@ -12,6 +12,10 @@ const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
+const poolConfig = {
+  connectionLimit: 10, // maximum number of connections in the pool
+};
+
 const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -20,7 +24,7 @@ const dbConfig = {
   connectTimeout: 60000, // 60 seconds
 };
 
-const pool = mysql.createPool(dbConfig);
+const pool = mysql.createPool({ ...dbConfig, ...poolConfig });
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
