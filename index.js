@@ -5,6 +5,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mysql = require('mysql2/promise');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
+const cron = require('node-cron');
 
 const app = express();
 app.use(express.json());
@@ -24,7 +25,7 @@ const dbConfig = {
 
 const pool = mysql.createPool({ ...dbConfig, ...poolConfig });
 
-// Create a function to ping the database
+// Periodic database ping
 const pingDatabase = async () => {
   try {
     await pool.query('SELECT 1');
@@ -34,8 +35,8 @@ const pingDatabase = async () => {
   }
 };
 
-// Call the pingDatabase function every 5 minutes (300000 milliseconds)
-setInterval(pingDatabase, 300000);
+// Schedule the pingDatabase function to run every 5 minutes
+cron.schedule('*/5 * * * *', pingDatabase);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
