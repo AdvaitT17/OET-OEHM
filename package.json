@@ -1,7 +1,7 @@
 {
   "name": "gulp_setup",
   "version": "1.0.0",
-  "description": "KJSCE OET-OEHM Portal",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
