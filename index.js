@@ -24,6 +24,19 @@ const dbConfig = {
 
 const pool = mysql.createPool({ ...dbConfig, ...poolConfig });
 
+// Create a function to ping the database
+const pingDatabase = async () => {
+  try {
+    await pool.query('SELECT 1');
+    console.log('Database pinged successfully');
+  } catch (error) {
+    console.error('Error pinging database:', error);
+  }
+};
+
+// Call the pingDatabase function every 5 minutes (300000 milliseconds)
+setInterval(pingDatabase, 300000);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
@@ -198,4 +211,4 @@ app.get('/auth/google/callback',
   (req, res) => res.redirect(req.user.first_login ? '/onboarding.html' : '/index.html')
 );
 
-app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
+// app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
