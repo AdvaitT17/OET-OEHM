@@ -35,8 +35,8 @@ const pingDatabase = async () => {
   }
 };
 
-// Schedule the pingDatabase function to run every 5 minutes
-cron.schedule('*/5 * * * *', pingDatabase);
+// Schedule the pingDatabase function to run every minute
+cron.schedule('* * * * *', pingDatabase);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
