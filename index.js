@@ -6,25 +6,27 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mysql = require('mysql2/promise');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
-//const cron = require('node-cron');
 
 const app = express();
 app.use(express.json());
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT;
+const Knex = require('knex');
 
-const poolConfig = {
-  connectionLimit: 10, // maximum number of connections in the pool
+const dbConfig = async config => {
+
+  return Knex({
+    client: 'mysql2',
+    connection: {
+      user: process.env.DB_USER, 
+      password: process.env.DB_PASS,
+      database: process.env.DB_NAME,
+      host: process.env.INSTANCE_UNIX_SOCKET,
+    },
+    ...config,
+  });
 };
 
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  connectTimeout: 60000, // 60 seconds
-};
-
-const pool = mysql.createPool({ ...dbConfig, ...poolConfig });
+const pool = mysql.createPool({ ...dbConfig });
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
