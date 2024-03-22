@@ -26,19 +26,6 @@ const dbConfig = {
 
 const pool = mysql.createPool({ ...dbConfig, ...poolConfig });
 
-// Periodic database ping
-//  const pingDatabase = async () => {
-//    try {
-//      await pool.query('SELECT 1');
-//      console.log('Database pinged successfully');
-//    } catch (error) {
-//      console.error('Error pinging database:', error);
-//    }
-//  };
-
-  // Schedule the pingDatabase function to run every minute
-//  cron.schedule('* * * * *', pingDatabase);
-
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
