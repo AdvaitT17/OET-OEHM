@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -5,11 +6,11 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mysql = require('mysql2/promise');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
-const cron = require('node-cron');
+//const cron = require('node-cron');
 
 const app = express();
 app.use(express.json());
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 const poolConfig = {
   connectionLimit: 10, // maximum number of connections in the pool
@@ -26,17 +27,17 @@ const dbConfig = {
 const pool = mysql.createPool({ ...dbConfig, ...poolConfig });
 
 // Periodic database ping
-const pingDatabase = async () => {
-  try {
-    await pool.query('SELECT 1');
-    console.log('Database pinged successfully');
-  } catch (error) {
-    console.error('Error pinging database:', error);
-  }
-};
+//  const pingDatabase = async () => {
+//    try {
+//      await pool.query('SELECT 1');
+//      console.log('Database pinged successfully');
+//    } catch (error) {
+//      console.error('Error pinging database:', error);
+//    }
+//  };
 
-// Schedule the pingDatabase function to run every minute
-cron.schedule('* * * * *', pingDatabase);
+  // Schedule the pingDatabase function to run every minute
+//  cron.schedule('* * * * *', pingDatabase);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
@@ -212,4 +213,4 @@ app.get('/auth/google/callback',
   (req, res) => res.redirect(req.user.first_login ? '/onboarding.html' : '/index.html')
 );
 
-// app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
