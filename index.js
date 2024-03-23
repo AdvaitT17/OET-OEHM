@@ -19,7 +19,6 @@ const poolConfig = {
 const dbConfig = {
   host: process.env.DB_HOST_LOCAL,
   user: process.env.DB_USER,
-  password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   connectTimeout: 60000, // 60 seconds
 };
