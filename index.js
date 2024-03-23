@@ -10,23 +10,20 @@ const { body, validationResult } = require('express-validator');
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT;
-const Knex = require('knex');
 
-const dbConfig = async config => {
-
-  return Knex({
-    client: 'mysql2',
-    connection: {
-      user: process.env.DB_USER, 
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
-      host: process.env.INSTANCE_UNIX_SOCKET,
-    },
-    ...config,
-  });
+const poolConfig = {
+  connectionLimit: 10, // maximum number of connections in the pool
 };
 
-const pool = mysql.createPool({ ...dbConfig });
+const dbConfig = {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+};
+
+const pool = mysql.createPool({ ...dbConfig, ...poolConfig });
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
