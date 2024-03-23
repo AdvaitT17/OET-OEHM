@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -9,17 +10,17 @@ const cron = require('node-cron');
 
 const app = express();
 app.use(express.json());
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 const poolConfig = {
   connectionLimit: 10, // maximum number of connections in the pool
 };
 
 const dbConfig = {
-  host: process.env.DB_HOST,
+  host: process.env.DB_HOST_LOCAL,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
   connectTimeout: 60000, // 60 seconds
 };
 
@@ -212,4 +213,4 @@ app.get('/auth/google/callback',
   (req, res) => res.redirect(req.user.first_login ? '/onboarding.html' : '/index.html')
 );
 
-// app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
