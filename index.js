@@ -11,10 +11,6 @@ const app = express();
 app.use(express.json());
 const PORT = process.env.PORT;
 
-const poolConfig = {
-  connectionLimit: 10, // maximum number of connections in the pool
-};
-
 const dbConfig = {
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -23,7 +19,7 @@ const dbConfig = {
   database: process.env.DB_NAME,
 };
 
-const pool = mysql.createPool({ ...dbConfig, ...poolConfig });
+const pool = mysql.createPool({ ...dbConfig });
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
@@ -37,9 +33,9 @@ passport.use(new GoogleStrategy({
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const [rows] = await pool.query(`
-      INSERT INTO users (email, name, first_login, profile_picture)
-      VALUES (?, ?, 1, ?) 
-      ON DUPLICATE KEY UPDATE name = ?, first_login = 0, profile_picture = ?
+      INSERT INTO users (email, name, profile_picture)
+      VALUES (?, ?, ?) 
+      ON DUPLICATE KEY UPDATE name = ?, profile_picture = ?
     `, [profile.emails[0].value, profile.displayName, profile.photos[0].value, profile.displayName, profile.photos[0].value]);
 
     const [userRows] = await pool.query('SELECT * FROM users WHERE email = ?', [profile.emails[0].value]);
@@ -65,10 +61,6 @@ passport.deserializeUser(async (email, done) => {
   }
 });
 
-const isAuthenticated = (req, res, next) => {
-  req.isAuthenticated() ? next() : res.redirect('/login.html');
-};
-
 // Global error handling middleware
 app.use((err, req, res, next) => {
   if (err.code === 'ETIMEDOUT') {
@@ -79,15 +71,65 @@ app.use((err, req, res, next) => {
   }
 });
 
-// Route to fetch course data from the database
-app.get('/api/courses', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT course_name, university, domain, difficulty_level, language, hours FROM courses_online;');
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching courses:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+// Custom middleware for authentication
+const isAuthenticated = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  } else {
+    res.redirect('/login.html');
   }
+};
+
+const isAuthenticatedAndOnboarded = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    const userEmail = req.user.email;
+    // Check if the user is authenticated and has completed the onboarding process
+    pool.query('SELECT * FROM users WHERE email = ?', [userEmail])
+      .then(([userRows]) => {
+        const user = userRows[0];
+        if (user && user.onboarded === 0) {
+          // If the user has not completed onboarding, redirect to onboarding page
+          res.redirect('/onboarding.html');
+        } else if (user && user.onboarded === 1) {
+          // If the user has completed onboarding, allow access to index.html
+          next();
+        } else {
+          // If onboarded status is not defined, handle appropriately
+          res.redirect('/login.html');
+        }
+      })
+      .catch(error => {
+        console.error('Error checking user onboarding status:', error);
+        res.redirect('/login.html'); // Redirect to login page on error
+      });
+  } else {
+    res.redirect('/login.html'); // Redirect to login page if not authenticated
+  }
+};
+
+// Route to serve onboarding.html
+app.get('/onboarding.html', isAuthenticated, (req, res) => {
+  const userEmail = req.user.email;
+  pool.query('SELECT onboarded FROM users WHERE email = ?', [userEmail])
+    .then(([userRows]) => {
+      const user = userRows[0];
+      if (user && user.onboarded === 0) {
+        // If the user has not completed onboarding, allow access to onboarding.html
+        res.sendFile(path.join(__dirname, '/public/onboarding.html'));
+      } else {
+        // If the user has completed onboarding or the onboarded status is not defined, redirect to index.html
+        res.redirect('/index.html');
+      }
+    })
+    .catch(error => {
+      console.error('Error checking user onboarding status:', error);
+      res.redirect('/login.html'); // Redirect to login page on error
+    });
+});
+
+// Route to fetch user data
+app.get('/user', isAuthenticated, (req, res) => {
+  res.json({ user: req.user || null });
 });
 
 // Refactored route for updating user data
@@ -119,47 +161,6 @@ app.post('/updateUserData', isAuthenticated, [
   }
 });
 
-// Function to check if a value is valid for an ENUM field
-async function isValidEnumValue(tableName, fieldName, value) {
-  try {
-    const [rows] = await pool.query(`
-      SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_NAME = ? AND COLUMN_NAME = ?;
-    `, [tableName, fieldName]);
-
-    const enumValues = rows[0].COLUMN_TYPE.match(/'([^']+)'/g).map(value => value.slice(1, -1));
-    return enumValues.includes(value);
-  } catch (error) {
-    console.error('Error checking enum value:', error);
-    return false;
-  }
-}
-
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Route to fetch user data
-app.get('/user', isAuthenticated, (req, res) => {
-  res.json({ user: req.user || null });
-});
-
-// Route for onboarding page
-app.get('/onboarding.html', isAuthenticated, async (req, res) => {
-  try {
-    const [userRows] = await pool.query('SELECT * FROM users WHERE email = ?', [req.user.email]);
-    const user = userRows[0];
-    if (user && user.first_login === 1) {
-      // Pass user email to the client-side code
-      res.sendFile(path.join(__dirname, '/public/onboarding.html'));
-    } else {
-      res.redirect('/index.html');
-    }
-  } catch (error) {
-    console.error('Error fetching user information:', error);
-    res.redirect('/');
-  }
-});
-
 app.post('/updateRollNumber', isAuthenticated, [
   body('rollNumber').isString().notEmpty().withMessage('Roll number is required'),
 ], async (req, res) => {
@@ -181,9 +182,31 @@ app.post('/updateRollNumber', isAuthenticated, [
   }
 });
 
-// Route to serve index.html
-app.get('/index.html', isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/index.html'));
+// Function to check if a value is valid for an ENUM field
+async function isValidEnumValue(tableName, fieldName, value) {
+  try {
+    const [rows] = await pool.query(`
+      SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_NAME = ? AND COLUMN_NAME = ?;
+    `, [tableName, fieldName]);
+
+    const enumValues = rows[0].COLUMN_TYPE.match(/'([^']+)'/g).map(value => value.slice(1, -1));
+    return enumValues.includes(value);
+  } catch (error) {
+    console.error('Error checking enum value:', error);
+    return false;
+  }
+}
+
+// Route to fetch course data from the database
+app.get('/api/courses', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT course_name, university, domain, difficulty_level, language, hours FROM courses_online;');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 // Logout route
@@ -196,7 +219,20 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
-  (req, res) => res.redirect(req.user.first_login ? '/onboarding.html' : '/index.html')
+  (req, res) => res.redirect(req.user.onboarded ? '/index.html' : '/onboarding.html')
 );
+
+// Route to serve onboarding.html
+app.get('/onboarding.html', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/onboarding.html'));
+});
+
+// Route to serve index.html
+app.get(['/', '/index.html'], isAuthenticatedAndOnboarded, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/index.html'));
+});
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
