@@ -140,9 +140,37 @@ app.get('/onboarding.html', isAuthenticated, (req, res) => {
     });
 });
 
+// User service or utility function
+const getUserData = async (req, res) => {
+  // Check if the user is authenticated
+  if (!req.user) {
+    return null;
+  }
+
+  // Create a sanitized user object with only necessary properties
+  const sanitizedUser = {
+    name: req.user.name,
+    email: req.user.email,
+    profile_picture: req.user.profile_picture,
+  };
+
+  return sanitizedUser;
+};
+
 // Route to fetch user data
-app.get('/user', isAuthenticated, (req, res) => {
-  res.json({ user: req.user || null });
+app.get('/user', isAuthenticated, async (req, res) => {
+  try {
+    const userData = await getUserData(req);
+
+    if (!userData) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    res.json({ user: userData });
+  } catch (err) {
+    console.error('Error fetching user data:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 // Refactored route for updating user data
