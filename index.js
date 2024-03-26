@@ -223,13 +223,13 @@ app.post('/updateRollNumber', isAuthenticated, [
   }
 });
 
-// Function to check if a value is valid for an ENUM field
 async function isValidEnumValue(tableName, fieldName, value) {
   try {
-    const [rows] = await pool.query(`
+    const query = `
       SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
       WHERE TABLE_NAME = ? AND COLUMN_NAME = ?;
-    `, [tableName, fieldName]);
+    `;
+    const [rows] = await pool.query(query, [tableName, fieldName]);
 
     const enumValues = rows[0].COLUMN_TYPE.match(/'([^']+)'/g).map(value => value.slice(1, -1));
     return enumValues.includes(value);
