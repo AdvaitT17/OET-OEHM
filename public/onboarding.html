@@ -164,9 +164,13 @@
                                                </select>
                                            </div>
                                        </div>
+                                       <label for="acknowledge">
+                                          <input type="checkbox" id="acknowledge" name="acknowledge">
+                                          I confirm that the information entered is correct.
+                                      </label>
                                    </div>                                   
                                     <div class="form-group clearfix">
-                                       <a href="javascript:;" class="form-wizard-next-btn float-right">Next</a>
+                                       <a href="javascript:;" class="form-wizard-next-btn float-right" id="nextButton1">Next</a>
                                     </div>
                                  </fieldset>	
                                  <fieldset class="wizard-fieldset">   
@@ -209,7 +213,7 @@
                                        </div> 
                                     </div>
                                        <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
-                                       <a href="javascript:;" class="form-wizard-next-btn float-right">Next</a>
+                                       <a href="javascript:;" class="form-wizard-next-btn float-right" id="nextButton2">Next</a>
                                     </div>
                                  </fieldset>	
                                  <fieldset class="wizard-fieldset">
@@ -252,15 +256,24 @@
                                        </div> 
                                     </div>
                                        <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
-                                       <a href="javascript:;" class="form-wizard-next-btn float-right">Next</a>
+                                       <a href="javascript:;" class="form-wizard-next-btn float-right" id="nextButton3">Next</a>
                                     </div>
                                  </fieldset>	
                                  <fieldset class="wizard-fieldset">
-                                    <div class="form-group clearfix">
-                                       <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
-                                       <a href="javascript:;" class="form-wizard-submit float-right">Submit</a>
+                                    <h4>Summary:</h4>
+                                    <legend>Selected Courses - OET</legend>
+                                    <div id="selectedOETCoursesTableContainer">
+                                        <!-- OET Courses Table will be dynamically generated here -->
                                     </div>
-                                 </fieldset>	
+                                    <legend>Selected Courses - OEHM</legend>
+                                    <div id="selectedOEHMCoursesTableContainer">
+                                        <!-- OEHM Courses Table will be dynamically generated here -->
+                                    </div>
+                                    <div class="form-group clearfix">
+                                        <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
+                                        <a href="javascript:;" class="form-wizard-submit float-right" id="finalSubmit">Submit</a>
+                                    </div>
+                                </fieldset>                           
                               </form>
                            </div>
                      </section>
@@ -289,7 +302,6 @@
       <script src="./js/plugins-init/datatables.init.js"></script>
       <script src="vendor/jquery-nice-select/js/jquery.nice-select.min.js"></script>
       <script src="./js/styleSwitcher.js"></script>
-      <script>$(document).ready(function(){function e(e){const t=$(e).DataTable({columns:[{data:"course_name"},{data:"university"},{data:"domain"},{data:"difficulty_level"},{data:"language"},{data:"hours"}],language:{paginate:{next:'<i class="fa fa-angle-double-right" aria-hidden="true"></i>',previous:'<i class="fa fa-angle-double-left" aria-hidden="true"></i>'}},responsive:!0});fetch("/api/courses").then(e=>e.json()).then(function(e){t.rows.add(e).draw()}).catch(function(e){console.error("Error fetching courses:",e)});$(e+" tbody").on("click","tr",function(){ $(this).toggleClass("selected")});$("#button").on("click",function(){const e=t.rows(".selected").count();alert(e+" row(s) selected")})}e("#OETCoursesTable"),e("#OEHMCoursesTable")});</script>
-      <script>document.addEventListener('DOMContentLoaded',function(){fetch('/user').then(response=>response.json()).then(data=>{var e=document.getElementById('profilePicture');e&&(e.src=data.user?data.user.profile_picture:'images/profile/default-profile.jpg'),document.getElementById('name').value=data.user?data.user.name:'',document.getElementById('email').value=data.user?data.user.email:''}).catch(error=>console.error('Error fetching user data:',error));document.getElementById('zcode').addEventListener('blur',function(){var e=this.value;fetch('/updateRollNumber',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rollNumber:e})}).then(response=>response.json()).then(data=>{console.log(data)}).catch(error=>console.error('Error updating roll number:',error))});function updateUserData(e,t){fetch('/updateUserData',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({field:e,value:t})}).then(response=>{response.ok?response.json().then(data=>{data.success?console.log(`${e} updated successfully`):console.error(`Failed to update ${e}: ${data.message}`)}):response.json().then(data=>{console.error(`Failed to update ${e}: ${response.statusText}`)})}).catch(error=>console.error('Error updating user data:',error))}document.getElementById('branchSelect').addEventListener('change',function(){updateUserData('branch',this.value)}),document.getElementById('semesterSelect').addEventListener('change',function(){updateUserData('semester',this.value)})});</script>
+      <script src="./vendor/global/onboarding.handler.js"></script>
    </body>
 </html>

@@ -152,6 +152,8 @@ const getUserData = async (req, res) => {
     name: req.user.name,
     email: req.user.email,
     profile_picture: req.user.profile_picture,
+    semester: req.user.semester,
+    onboarded: req.user.onboarded,
   };
 
   return sanitizedUser;
@@ -173,6 +175,37 @@ app.get('/user', isAuthenticated, async (req, res) => {
   }
 });
 
+// Function to update academic year in the Users table
+function updateAcademicYear(userEmail, newSemester) {
+  // Fetch the current year
+  const currentYear = new Date().getFullYear();
+
+  // Calculate the academic year based on the current year and the provided semester
+  let academicYear = currentYear;
+
+  // Adjust the academic year based on the semester
+  if (newSemester % 2 === 0) {
+    // For even semesters, increment the academic year
+    academicYear++;
+  } else {
+    // For odd semesters, no change in academic year
+  }
+
+  // Construct the academic year string
+  const academicYearString = `${academicYear - 1}-${academicYear}`;
+
+  // Update the academic year in the Users table
+  const query = `UPDATE Users SET academic_year = ? WHERE email = ?`;
+  pool.query(query, [academicYearString, userEmail], (error, results) => {
+    if (error) {
+      console.error('Error updating academic year:', error);
+      return;
+    }
+    console.log('Academic year updated successfully');
+  });
+}
+
+
 // Refactored route for updating user data
 app.post('/updateUserData', isAuthenticated, [
   body('field').isString().notEmpty().withMessage('Field is required'),
@@ -187,14 +220,24 @@ app.post('/updateUserData', isAuthenticated, [
   const userEmail = req.user.email;
 
   try {
-    // Validate the field and value
+    // Skip ENUM validation for fields that are not ENUM types
+    if (field !== 'semester') {
+      await pool.query(`UPDATE users SET ${field} = ? WHERE email = ?`, [value, userEmail]);
+      return res.json({ success: true, message: `${field} updated successfully` });
+    }
+
+    // Proceed with ENUM validation for 'semester'
     const isValidValue = await isValidEnumValue('users', field, value);
     if (!isValidValue) {
       return res.status(400).json({ success: false, message: `Invalid value for ${field}` });
     }
 
-    // Update the specified field in the database
+    // Update the semester in the database
     await pool.query(`UPDATE users SET ${field} = ? WHERE email = ?`, [value, userEmail]);
+    
+    // Calculate and update the academic year based on the new semester
+    updateAcademicYear(userEmail, value);
+
     res.json({ success: true, message: `${field} updated successfully` });
   } catch (error) {
     console.error(`Error updating ${field}:`, error);
@@ -231,7 +274,14 @@ async function isValidEnumValue(tableName, fieldName, value) {
     `;
     const [rows] = await pool.query(query, [tableName, fieldName]);
 
-    const enumValues = rows[0].COLUMN_TYPE.match(/'([^']+)'/g).map(value => value.slice(1, -1));
+    // Check if rows are returned and if COLUMN_TYPE is not null
+    if (!rows || rows.length === 0 || !rows[0].COLUMN_TYPE) {
+      console.error('No COLUMN_TYPE found for the specified field.');
+      return false;
+    }
+
+    // Extract enum values and check if the provided value is valid
+    const enumValues = rows[0].COLUMN_TYPE.match(/'([^']+)'/g).map(enumValue => enumValue.replace(/'/g, ''));
     return enumValues.includes(value);
   } catch (error) {
     console.error('Error checking enum value:', error);
@@ -242,13 +292,125 @@ async function isValidEnumValue(tableName, fieldName, value) {
 // Route to fetch course data from the database
 app.get('/api/courses', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT course_name, university, domain, difficulty_level, language, hours FROM courses_online;');
+    const [rows] = await pool.query('SELECT course_id, course_name, university, domain, difficulty_level, language, hours FROM courses_online;');
     res.json(rows);
   } catch (error) {
     console.error('Error fetching courses:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error', details: error.toString() });
   }
 });
+
+// Endpoint to handle course enrollment
+app.post('/api/enroll', isAuthenticated, async (req, res) => {
+  console.log('Enrollment request received:', req.body); // Server-side debugging log
+
+  try {
+    const userEmail = req.user.email; // Get the user email from the session
+    const courses = req.body.courses; // Array of courses from the client
+
+    // Fetch the current semester of the user from the Users table
+    const [userRows] = await pool.query('SELECT semester FROM users WHERE email = ?', [userEmail]);
+    const userSemester = userRows[0].semester;
+
+    // Fetch the current academic year
+    const currentAcademicYear = await getCurrentAcademicYear();
+
+    // Validate courses
+    const isValid = await validateCourses(userEmail, courses);
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: 'Course validation failed' });
+    }
+
+    // Begin a transaction to ensure atomicity of the enrollment process
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      // Insert each course enrollment into the database
+      for (const course of courses) {
+        // Ensure course_id is not null or undefined
+        if (!course.course_id || !course.type) {
+          throw new Error('Course ID is missing');
+        }
+        await connection.query('INSERT INTO enrollments (email, course_id, total_hours, mode, type, enrolled_academic_year, enrolled_semester) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+          [userEmail, course.course_id, course.total_hours, course.mode, course.type, currentAcademicYear, userSemester]);
+      }
+
+      // Commit the transaction
+      await connection.commit();
+      connection.release();
+      res.json({ success: true, message: 'Enrollment successful' });
+    } catch (error) {
+      // Rollback the transaction in case of an error
+      await connection.rollback();
+      connection.release();
+      console.error('Enrollment error:', error);
+      res.status(500).json({ success: false, message: 'Enrollment failed' });
+    }
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ success: false, message: 'Enrollment failed' });
+  }
+});
+
+// Function to validate courses before enrollment
+async function validateCourses(userEmail, courses) {
+  try {
+    // Fetch the user's past enrollments
+    const [pastEnrollments] = await pool.query('SELECT course_id FROM enrollments WHERE email = ?', [userEmail]);
+
+    const pastCourseIds = pastEnrollments.map(enrollment => enrollment.course_id);
+
+    // Check if any of the selected courses are already enrolled
+    for (const course of courses) {
+      if (pastCourseIds.includes(course.course_id)) {
+        return false;
+      }
+    }
+
+    // Check for repetitive courses within the selected courses
+    const selectedCourseIds = courses.map(course => course.course_id);
+    if (new Set(selectedCourseIds).size !== selectedCourseIds.length) {
+      return false;
+    }
+
+    // Check for total hours for OET and OEHM courses
+    let totalOETHours = 0;
+    let totalOEHMHours = 0;
+    for (const course of courses) {
+      if (course.type === 'OET') {
+        totalOETHours += course.total_hours;
+      } else if (course.type === 'OEHM') {
+        totalOEHMHours += course.total_hours;
+      }
+    }
+
+    // Validate total hours for OET courses
+    if (totalOETHours < 30 || totalOETHours > 45) {
+      return false;
+    }
+
+    // Validate total hours for OEHM courses
+    if (totalOEHMHours < 30 || totalOEHMHours > 45) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error validating courses:', error);
+    return false;
+  }
+}
+
+// Function to fetch the current academic year
+async function getCurrentAcademicYear() {
+  // Fetch the current year
+  const currentYear = new Date().getFullYear();
+
+  // Calculate the academic year based on the current year and semester
+  const academicYear = currentYear;
+  return `${academicYear - 1}-${academicYear}`;
+}
 
 // Logout route
 app.get('/logout', (req, res) => {
