@@ -9,7 +9,7 @@
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <meta name="description" content="" />
       <meta name="format-detection" content="telephone=no">
-      <title>Onboarding | KJ Somaiya OET-OEHM Portal</title>
+      <title>Onboarding Success | KJ Somaiya OET-OEHM Portal</title>
       <link rel="shortcut icon" type="image/png" href="images/favicon.png" />
       <!-- Datatable -->
       <link href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" rel="stylesheet">
@@ -17,22 +17,18 @@
 	   <link href="./vendor/jquery-nice-select/css/nice-select.css" rel="stylesheet">
       <link href="./css/style.css" rel="stylesheet">
       <link href="./css/onboarding.style.css" rel="stylesheet">
-      <style>.summary-table {
-         border-collapse: collapse;
-         width: 100%;
-         margin-bottom: 20px;
-       }
-       
-       .summary-table th,
-       .summary-table td {
-         padding: 8px;
-         text-align: left;
-         border: 1px solid #ddd;
-       }
-       
-       .summary-table th {
-         background-color: #f2f2f2;
-       }</style>
+      <style>
+        .content-center-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .content-center-body {
+            text-align: center;
+        }
+    </style>
    </head>
    <body>
       <!--*******************
@@ -115,184 +111,22 @@
       <!--**********************************
          Content body start
          ***********************************-->
-      <div class="content-body">
-         <div class="container-fluid">
-            <!-- row -->
-            <div class="row">
-               <div class="col-xl-12 col-xxl-12">
-                  <div class="card">
-                     <div class="card-header">
-                        <h4 class="card-title">Enrollment</h4>
-                     </div>
-                     <div class="card-body">
-                        <section class="wizard-section">
-                           <div class="form-wizard">
-                              <form>
-                                 <div class="form-wizard-header">
-                                    <p></p>
-                                    <ul class="list-unstyled form-wizard-steps clearfix">
-                                       <li class="active"><span>1</span></li>
-                                       <li><span>2</span></li>
-                                       <li><span>3</span></li>
-                                       <li><span>4</span></li>
-                                    </ul>
-                                 </div>
-                                 <fieldset class="wizard-fieldset show">
-                                    <h5>Personal Information</h5>
-                                    <div class="row">
-                                       <div class="col-lg-6 col-md-6 col-sm-6">
-                                          <div class="form-group">
-                                             <label for="name">Name</label>
-                                             <input type="text" class="form-control wizard-required" id="name" readonly>
-                                             <div class="wizard-form-error"></div>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-6 col-md-6 col-sm-6">
-                                          <div class="form-group">
-                                             <label for="email">Email</label>
-                                             <input type="text" class="form-control wizard-required" id="email" readonly>
-                                             <div class="wizard-form-error"></div>
-                                          </div>
-                                       </div>
-                                    </div>
-                                    <div class="form-group">
-                                       <input type="text" class="form-control wizard-required" id="zcode">
-                                       <label for="zcode" class="wizard-form-text-label">Roll Number</label>
-                                       <div class="wizard-form-error"></div>
-                                    </div>
-                                    <h5>Branch & Semester</h5>
-                                    <div class="row">
-                                       <div class="col-lg-6 col-md-6 col-sm-6">
-                                           <div class="form-group">
-                                               <select class="form-control" id="branchSelect">
-                                                   <option value="IT">IT</option>
-                                                   <option value="COMPS">COMPS</option>
-                                                   <option value="EXTC">EXTC</option>
-                                               </select>
-                                           </div>
-                                       </div>
-                                       <div class="col-lg-6 col-md-6 col-sm-6">
-                                           <div class="form-group">
-                                               <select class="form-control" id="semesterSelect">
-                                                   <option value="V">V</option>
-                                                   <option value="VI">VI</option>
-                                                   <option value="VII">VII</option>
-                                               </select>
-                                           </div>
-                                       </div>
-                                       <label for="acknowledge">
-                                          <input type="checkbox" id="acknowledge" name="acknowledge">
-                                          I confirm that the information entered is correct.
-                                      </label>
-                                   </div>                                   
-                                    <div class="form-group clearfix">
-                                       <a href="javascript:;" class="form-wizard-next-btn float-right" id="nextButton1">Next</a>
-                                    </div>
-                                 </fieldset>	
-                                 <fieldset class="wizard-fieldset">   
-                                    <div class="form-group clearfix">        
-                                       <div class="row">
-                                          <div class="col-12">
-                                              <div class="card">
-                                                  <div class="card-header">
-                                                      <h4 class="card-title">OET Online Course Selection</h4>
-                                                  </div>
-                                             <div class="card-body">
-                                                <div class="table-responsive">
-                                                   <table id="OETCoursesTable" class="display" style="width:100%">
-                                                      <thead>
-                                                            <tr>
-                                                               <th>Course</th>
-                                                               <th>University</th>
-                                                               <th>Domain</th>
-                                                               <th>Difficulty</th>
-                                                               <th>Language</th>
-                                                               <th>Hours</th>
-                                                            </tr>
-                                                      </thead>
-                                                      <tbody id="courseTableBody">
-                                                      </tbody>
-                                                      <tfoot>
-                                                            <tr>
-                                                               <th>Course</th>
-                                                               <th>University</th>
-                                                               <th>Domain</th>
-                                                               <th>Difficulty</th>
-                                                               <th>Language</th>
-                                                               <th>Hours</th>
-                                                            </tr>
-                                                      </tfoot>
-                                                   </table>
-                                                </div>
-                                             </div>
-                                          </div>
-                                       </div> 
-                                    </div>
-                                       <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
-                                       <a href="javascript:;" class="form-wizard-next-btn float-right" id="nextButton2">Next</a>
-                                    </div>
-                                 </fieldset>	
-                                 <fieldset class="wizard-fieldset">
-                                    <div class="form-group clearfix">        
-                                       <div class="row">
-                                          <div class="col-12">
-                                              <div class="card">
-                                                  <div class="card-header">
-                                                      <h4 class="card-title">OEHM Online Course Selection</h4>
-                                                  </div>
-                                             <div class="card-body">
-                                                <div class="table-responsive">
-                                                   <table id="OEHMCoursesTable" class="display" style="width:100%">
-                                                      <thead>
-                                                            <tr>
-                                                               <th>Course</th>
-                                                               <th>University</th>
-                                                               <th>Domain</th>
-                                                               <th>Difficulty</th>
-                                                               <th>Language</th>
-                                                               <th>Hours</th>
-                                                            </tr>
-                                                      </thead>
-                                                      <tbody id="courseTableBody">
-                                                      </tbody>
-                                                      <tfoot>
-                                                            <tr>
-                                                               <th>Course</th>
-                                                               <th>University</th>
-                                                               <th>Domain</th>
-                                                               <th>Difficulty</th>
-                                                               <th>Language</th>
-                                                               <th>Hours</th>
-                                                            </tr>
-                                                      </tfoot>
-                                                   </table>
-                                                </div>
-                                             </div>
-                                          </div>
-                                       </div> 
-                                    </div>
-                                       <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
-                                       <a href="javascript:;" class="form-wizard-next-btn float-right" id="nextButton3">Next</a>
-                                    </div>
-                                 </fieldset>	
-                                 <fieldset class="wizard-fieldset">
-                                    <h4>Summary:</h4>
-                                    <div id="selectedCoursesContainer"></div>
-                                    <div class="form-group clearfix">
-                                        <a href="javascript:;" class="form-wizard-previous-btn float-left">Previous</a>
-                                        <a href="javascript:;" class="form-wizard-submit float-right" id="finalSubmit">Submit</a>
-                                    </div>
-                                </fieldset>                           
-                              </form>
-                           </div>
-                     </section>
-                     </div>
-                  </div>
-               </div>
+         <div class="content-center-wrapper">
+            <div class="content-center-body">
+                <div class="container-fluid">
+                    <div class="row align-items-center justify-content-center">
+                        <div class="col text-center">
+                            <h1 class="mb-4">Successful Onboarding</h1>
+                            <p>Your response has been recorded successfully.</p>
+                            <p>You will be informed once the reviewer approves your selected courses.</p>
+                            <p>After approval, you can log in to your dashboard and start completing your selected courses.</p>
+                            <a href="/" class="btn btn-primary">Go to Dashboard</a>
+                        </div>
+                    </div>
+                </div>
             </div>
-         </div>
-      </div>
-   </div>   
+        </div>
+         
       <!--**********************************
          Main wrapper end
          ***********************************-->
@@ -311,6 +145,6 @@
       <script src="./js/plugins-init/datatables.init.js"></script>
       <script src="vendor/jquery-nice-select/js/jquery.nice-select.min.js"></script>
       <script src="./js/styleSwitcher.js"></script>
-      <script src="./vendor/global/onboarding.handler.js"></script>
+      <script src="./vendor/global/onboarding-success.handler.js"></script>
    </body>
 </html>

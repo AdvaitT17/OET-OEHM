@@ -339,6 +339,10 @@ app.post('/api/enroll', isAuthenticated, async (req, res) => {
       // Commit the transaction
       await connection.commit();
       connection.release();
+
+      // Call the function to check enrollment and set onboarded status
+      await checkEnrollmentAndSetOnboarded(userEmail, userSemester);
+
       res.json({ success: true, message: 'Enrollment successful' });
     } catch (error) {
       // Rollback the transaction in case of an error
@@ -412,6 +416,27 @@ async function getCurrentAcademicYear() {
   return `${academicYear - 1}-${academicYear}`;
 }
 
+// Function to check if the user has successfully enrolled for courses in their respective semester
+async function checkEnrollmentAndSetOnboarded(userEmail, currentSemester) {
+  try {
+    // Check if the user has enrolled for courses in their current semester
+    const [enrollmentRows] = await pool.query('SELECT COUNT(*) AS count FROM enrollments WHERE email = ? AND enrolled_semester = ?', [userEmail, currentSemester]);
+    const enrollmentCount = enrollmentRows[0].count;
+
+    // If the user has enrolled for courses in their current semester, update onboarded status to 1
+    if (enrollmentCount > 0) {
+      await pool.query('UPDATE users SET onboarded = 1 WHERE email = ?', [userEmail]);
+      console.log('User onboarded successfully');
+    }
+  } catch (error) {
+    console.error('Error checking enrollment and setting onboarded status:', error);
+  }
+}
+
+app.get(['/successful-onboarding', '/successful-onboarding.html'], isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/successful-onboarding.html'));
+});
+
 // Logout route
 app.get('/logout', (req, res) => {
   req.logout((err) => err ? res.send('Error logging out') : res.redirect('/login.html'));
@@ -424,11 +449,6 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => res.redirect(req.user.onboarded ? '/index.html' : '/onboarding.html')
 );
-
-// Route to serve onboarding.html
-app.get('/onboarding.html', isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/onboarding.html'));
-});
 
 // Route to serve index.html
 app.get(['/', '/index.html'], isAuthenticatedAndOnboarded, (req, res) => {

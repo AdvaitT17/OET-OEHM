@@ -49,19 +49,60 @@ $(document).ready(function() {
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');
         selectedCourses = selectedCourses.filter(course => course.course_id !== data.course_id);
+        displaySelectedCoursesSummary(); // Update summary after removing a course
       } else {
         $(this).addClass('selected');
         selectedCourses.push({
           course_id: data.course_id,
+          course_name: data.course_name,
+          university: data.university,
+          domain: data.domain,
+          difficulty_level: data.difficulty_level,
+          language: data.language,
           total_hours: data.hours,
           mode: 'online', // Assuming the mode is online for this example
           type: tableId === "#OETCoursesTable" ? "OET" : "OEHM", // Determining the type based on the tableId
-          semester: $('#semesterDropdown').val() // Fetching the semester value from a dropdown or any other input field
-        });        
+        });
+        displaySelectedCoursesSummary(); // Update summary after adding a course
       }
     });
 
     return dataTable;
+  }
+
+  // Function to display the selected courses summary
+  function displaySelectedCoursesSummary() {
+    const summaryContainer = document.getElementById('selectedCoursesContainer');
+    summaryContainer.innerHTML = ''; // Clear the container
+
+    if (selectedCourses.length === 0) {
+      summaryContainer.innerHTML = '<p>No courses selected yet.</p>';
+      return;
+    }
+
+    const summaryTable = document.createElement('table');
+    summaryTable.classList.add('summary-table'); // Add a class for styling
+
+    const headerRow = summaryTable.insertRow();
+    const headers = ['Course Name', 'University', 'Domain', 'Difficulty Level', 'Language', 'Hours', 'Type'];
+    headers.forEach(header => {
+      const th = document.createElement('th');
+      th.textContent = header;
+      headerRow.appendChild(th);
+    });
+
+    selectedCourses.forEach(course => {
+      const row = summaryTable.insertRow();
+      row.insertCell().textContent = course.course_name;
+      row.insertCell().textContent = course.university;
+      row.insertCell().textContent = course.domain;
+      row.insertCell().textContent = course.difficulty_level;
+      row.insertCell().textContent = course.language;
+      row.insertCell().textContent = course.total_hours;
+      row.insertCell().textContent = course.type;
+    });
+
+    summaryContainer.appendChild(summaryTable);
   }
 
   // Function to handle enrollment
@@ -79,13 +120,8 @@ $(document).ready(function() {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert('Enrollment successful!');
-          selectedCourses = [];
-          $('.selected').removeClass('selected');
-
-          // Reinitialize DataTables with updated data
-          oetDataTable = initializeDataTable("#OETCoursesTable", oetDataTable);
-          oehmDataTable = initializeDataTable("#OEHMCoursesTable", oehmDataTable);
+          // Redirect to successful onboarding page
+          window.location.href = '/successful-onboarding';
         } else {
           alert('Enrollment failed: ' + data.message);
         }
