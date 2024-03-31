@@ -195,7 +195,7 @@ function updateAcademicYear(userEmail, newSemester) {
   const academicYearString = `${academicYear - 1}-${academicYear}`;
 
   // Update the academic year in the Users table
-  const query = `UPDATE Users SET academic_year = ? WHERE email = ?`;
+  const query = `UPDATE users SET academic_year = ? WHERE email = ?`;
   pool.query(query, [academicYearString, userEmail], (error, results) => {
     if (error) {
       console.error('Error updating academic year:', error);
