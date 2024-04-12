@@ -6,20 +6,33 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mysql = require('mysql2/promise');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
+const cron = require('node-cron');
 
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT;
 
 const dbConfig = {
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  host: process.env.DB_HOST_LOCAL,
   user: process.env.DB_USER,
-  password: process.env.DB_PASS,
   database: process.env.DB_NAME,
+  connectTimeout: 60000, // 60 seconds
 };
 
-const pool = mysql.createPool({ ...dbConfig });
+const pool = mysql.createPool({ ...dbConfig});
+
+// Periodic database ping
+const pingDatabase = async () => {
+  try {
+    await pool.query('SELECT 1');
+    console.log('Database pinged successfully');
+  } catch (error) {
+    console.error('Error pinging database:', error);
+  }
+};
+
+// Schedule the pingDatabase function to run every minute
+cron.schedule('* * * * *', pingDatabase);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
