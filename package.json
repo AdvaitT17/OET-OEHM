@@ -12,7 +12,7 @@
     "@google-cloud/cloud-sql-connector": "^1.2.4",
     "autoprefixer": "^10.4.8",
     "dotenv": "^16.4.5",
-    "ejs": "^3.1.9",
+    "ejs": "^3.1.10",
     "express": "^4.19.2",
     "express-session": "^1.17.3",
     "express-validator": "^7.0.1",
