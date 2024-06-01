@@ -276,13 +276,33 @@ async function isValidEnumValue(tableName, fieldName, value) {
   }
 }
 
-// Route to fetch course data from the database
+// Route to fetch online course data from the database
 app.get('/api/courses', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT course_id, course_name, university, domain, difficulty_level, language, hours FROM courses_online;');
     res.json(rows);
   } catch (error) {
     console.error('Error fetching courses:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.toString() });
+  }
+});
+
+// Route to fetch offline course data from the database
+app.get('/api/courses_offline', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        course_code, 
+        course_name, 
+        faculty_name, 
+        semester, 
+        faculty_email, 
+        course_type 
+      FROM courses_offline;
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching offline courses:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.toString() });
   }
 });
