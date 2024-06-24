@@ -46,12 +46,26 @@ passport.use(new GoogleStrategy({
   callbackURL: process.env.CALLBACK_URL,
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    const [rows] = await pool.query(`
-      INSERT INTO users (email, name, profile_picture)
-      VALUES (?, ?, ?) 
-      ON DUPLICATE KEY UPDATE name = ?, profile_picture = ?
-    `, [profile.emails[0].value, profile.displayName, profile.photos[0].value, profile.displayName, profile.photos[0].value]);
+    // First, check if the user exists in the attendance table
+    const [attendanceRows] = await pool.query('SELECT * FROM attendance WHERE attendee_email = ?', [profile.emails[0].value]);
+    const isAttendanceVerified = attendanceRows.length > 0;
 
+    // Now, insert or update the user, including the attendance_verified flag
+    const [rows] = await pool.query(`
+      INSERT INTO users (email, name, profile_picture, attendance_verified)
+      VALUES (?, ?, ?, ?) 
+      ON DUPLICATE KEY UPDATE name = ?, profile_picture = ?, attendance_verified = ?
+    `, [
+      profile.emails[0].value, 
+      profile.displayName, 
+      profile.photos[0].value, 
+      isAttendanceVerified ? 1 : 0,
+      profile.displayName, 
+      profile.photos[0].value,
+      isAttendanceVerified ? 1 : 0
+    ]);
+
+    // Fetch the updated user data
     const [userRows] = await pool.query('SELECT * FROM users WHERE email = ?', [profile.emails[0].value]);
     const user = userRows[0];
 
@@ -94,6 +108,7 @@ const isAuthenticated = (req, res, next) => {
   }
 };
 
+// Modify the isAuthenticatedAndOnboarded middleware
 const isAuthenticatedAndOnboarded = (req, res, next) => {
   if (req.isAuthenticated()) {
     const userEmail = req.user.email;
@@ -119,20 +134,7 @@ const isAuthenticatedAndOnboarded = (req, res, next) => {
 
 // Route to serve onboarding.html
 app.get('/onboarding.html', isAuthenticated, (req, res) => {
-  const userEmail = req.user.email;
-  pool.query('SELECT onboarded FROM users WHERE email = ?', [userEmail])
-    .then(([userRows]) => {
-      const user = userRows[0];
-      if (user && user.onboarded === 0) {
-        res.sendFile(path.join(__dirname, '/public/onboarding.html'));
-      } else {
-        res.redirect('/index.html');
-      }
-    })
-    .catch(error => {
-      console.error('Error checking user onboarding status:', error);
-      res.redirect('/login.html');
-    });
+  res.sendFile(path.join(__dirname, '/public/onboarding.html'));
 });
 
 // User service or utility function
@@ -169,58 +171,66 @@ app.get('/user', isAuthenticated, async (req, res) => {
 });
 
 // Function to update academic year in the Users table
-function updateAcademicYear(userEmail, newSemester) {
-  const currentYear = new Date().getFullYear();
-  let academicYear = currentYear;
+async function updateAcademicYear(userEmail, semester) {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
 
-  if (newSemester % 2 === 0) {
-    academicYear++;
+  let academicYear;
+  if (currentMonth < 6) {  // Before July
+    academicYear = `${currentYear - 1}-${currentYear}`;
+  } else {  // July onwards
+    academicYear = `${currentYear}-${currentYear + 1}`;
   }
 
-  const academicYearString = `${academicYear - 1}-${academicYear}`;
-
-  const query = `UPDATE users SET academic_year = ? WHERE email = ?`;
-  pool.query(query, [academicYearString, userEmail], (error, results) => {
-    if (error) {
-      console.error('Error updating academic year:', error);
-      return;
-    }
+  try {
+    const query = `UPDATE users SET academic_year = ? WHERE email = ?`;
+    await pool.query(query, [academicYear, userEmail]);
     console.log('Academic year updated successfully');
-  });
+  } catch (error) {
+    console.error('Error updating academic year:', error);
+    throw error;
+  }
 }
 
-// Refactored route for updating user data
+// Add this new route to check the onboarding step
+app.get('/checkOnboardingStep', isAuthenticated, async (req, res) => {
+  try {
+      const [rows] = await pool.query('SELECT onboarding_step FROM users WHERE email = ?', [req.user.email]);
+      if (rows.length > 0) {
+          res.json({ step: rows[0].onboarding_step });
+      } else {
+          res.json({ step: 1 });
+      }
+  } catch (error) {
+      console.error('Error checking onboarding step:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 app.post('/updateUserData', isAuthenticated, [
-  body('field').isString().notEmpty().withMessage('Field is required'),
-  body('value').isString().notEmpty().withMessage('Value is required'),
+  body('roll_number').isString().notEmpty(),
+  body('branch').isIn(['IT', 'COMPS', 'EXTC']),
+  body('semester').isIn(['V', 'VI', 'VII']),
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ success: false, errors: errors.array() });
   }
 
-  const { field, value } = req.body;
+  const { roll_number, branch, semester } = req.body;
   const userEmail = req.user.email;
 
   try {
-    if (field !== 'semester') {
-      await pool.query(`UPDATE users SET ${field} = ? WHERE email = ?`, [value, userEmail]);
-      return res.json({ success: true, message: `${field} updated successfully` });
-    }
+      await pool.query(
+          'UPDATE users SET roll_number = ?, branch = ?, semester = ?, onboarding_step = 2 WHERE email = ?',
+          [roll_number, branch, semester, userEmail]
+      );
 
-    const isValidValue = await isValidEnumValue('users', field, value);
-    if (!isValidValue) {
-      return res.status(400).json({ success: false, message: `Invalid value for ${field}` });
-    }
-
-    await pool.query(`UPDATE users SET ${field} = ? WHERE email = ?`, [value, userEmail]);
-    
-    updateAcademicYear(userEmail, value);
-
-    res.json({ success: true, message: `${field} updated successfully` });
+      res.json({ success: true, message: 'User data updated successfully' });
   } catch (error) {
-    console.error(`Error updating ${field}:`, error);
-    res.status(500).json({ success: false, message: `Failed to update ${field}` });
+      console.error('Error updating user data:', error);
+      res.status(500).json({ success: false, message: 'Failed to update user data' });
   }
 });
 
@@ -285,106 +295,81 @@ app.post('/api/enroll', isAuthenticated, async (req, res) => {
   console.log('Enrollment request received:', req.body);
 
   try {
-    const userEmail = req.user.email;
-    const courses = req.body.courses;
-
-    const [userRows] = await pool.query('SELECT semester FROM users WHERE email = ?', [userEmail]);
-    const userSemester = userRows[0].semester;
-
-    const currentAcademicYear = await getCurrentAcademicYear();
-
-    const isValid = await validateCourses(userEmail, courses);
-    if (!isValid) {
-      return res.status(400).json({ success: false, message: 'Course validation failed' });
+    const { courses } = req.body;
+    
+    if (!Array.isArray(courses) || courses.length === 0) {
+      return res.status(400).json({ success: false, message: 'Invalid courses data' });
     }
 
+    // Validate the courses data
+    for (const course of courses) {
+      if (!course.email) {
+        return res.status(400).json({ success: false, message: 'Email is missing' });
+      }
+      if (!course.course_id) {
+        return res.status(400).json({ success: false, message: 'Course ID is missing' });
+      }
+      if (!course.mode) {
+        return res.status(400).json({ success: false, message: 'Mode is missing' });
+      }
+      if (!course.type) {
+        return res.status(400).json({ success: false, message: 'Type is missing' });
+      }
+      if (!course.enrolled_semester) {
+        return res.status(400).json({ success: false, message: 'Enrolled semester is missing' });
+      }
+      if (!course.enrolled_academic_year) {
+        return res.status(400).json({ success: false, message: 'Enrolled academic year is missing' });
+      }
+
+      // Validate mode
+      if (course.mode !== 'ONLINE' && course.mode !== 'OFFLINE') {
+        return res.status(400).json({ success: false, message: 'Invalid mode value' });
+      }
+      
+      // Validate type
+      if (course.type !== 'OET' && course.type !== 'OEHM') {
+        return res.status(400).json({ success: false, message: 'Invalid type value' });
+      }
+
+      // Validate total_hours (can be null for offline courses)
+      if (course.mode === 'ONLINE' && (course.total_hours === null || isNaN(course.total_hours))) {
+        return res.status(400).json({ success: false, message: 'Invalid total hours for online course' });
+      }
+    }
+
+    // Insert the courses into the database
     const connection = await pool.getConnection();
     await connection.beginTransaction();
 
     try {
       for (const course of courses) {
-        if (!course.course_id || !course.type) {
-          throw new Error('Course ID or type is missing');
-        }
-        await connection.query('INSERT INTO enrollments (email, course_id, total_hours, mode, type, enrolled_academic_year, enrolled_semester) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-          [userEmail, course.course_id, course.total_hours, course.mode, course.type, currentAcademicYear, userSemester]);
+        await connection.query(
+          'INSERT INTO enrollments (email, course_id, total_hours, mode, type, enrolled_semester, enrolled_academic_year) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [course.email, course.course_id, course.total_hours, course.mode, course.type, course.enrolled_semester, course.enrolled_academic_year]
+        );
       }
 
+      // Set onboarded to 1
+      await connection.query('UPDATE users SET onboarded = 1 WHERE email = ?', [req.user.email]);
+
       await connection.commit();
-      connection.release();
-
-      await checkEnrollmentAndSetOnboarded(userEmail, userSemester);
-
       res.json({ success: true, message: 'Enrollment successful' });
     } catch (error) {
       await connection.rollback();
+      console.error('Database error during enrollment:', error);
+      res.status(500).json({ success: false, message: 'Enrollment failed due to a database error' });
+    } finally {
       connection.release();
-      console.error('Enrollment error:', error);
-      res.status(500).json({ success: false, message: 'Enrollment failed' });
     }
   } catch (error) {
-    console.error('Database connection error:', error);
-    res.status(500).json({ success: false, message: 'Enrollment failed' });
+    console.error('Error processing enrollment:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
-async function validateCourses(userEmail, courses) {
-  try {
-    const [pastEnrollments] = await pool.query('SELECT course_id FROM enrollments WHERE email = ?', [userEmail]);
-    const pastCourseIds = pastEnrollments.map(enrollment => enrollment.course_id);
-
-    for (const course of courses) {
-      if (pastCourseIds.includes(course.course_id)) {
-        return false;
-      }
-    }
-
-    const selectedCourseIds = courses.map(course => course.course_id);
-    if (new Set(selectedCourseIds).size !== selectedCourseIds.length) {
-      return false;
-    }
-
-    let totalOETHours = 0;
-    let totalOEHMHours = 0;
-    for (const course of courses) {
-      if (course.type === 'OET') {
-        totalOETHours += course.total_hours;
-      } else if (course.type === 'OEHM') {
-        totalOEHMHours += course.total_hours;
-      }
-    }
-
-    if (totalOETHours < 30 || totalOETHours > 45 || totalOEHMHours < 30 || totalOEHMHours > 45) {
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error validating courses:', error);
-    return false;
-  }
-}
-
-async function getCurrentAcademicYear() {
-  const currentYear = new Date().getFullYear();
-  return `${currentYear - 1}-${currentYear}`;
-}
-
-async function checkEnrollmentAndSetOnboarded(userEmail, currentSemester) {
-  try {
-    const [enrollmentRows] = await pool.query('SELECT COUNT(*) AS count FROM enrollments WHERE email = ? AND enrolled_semester = ?', [userEmail, currentSemester]);
-    const enrollmentCount = enrollmentRows[0].count;
-
-    if (enrollmentCount > 0) {
-      await pool.query('UPDATE users SET onboarded = 1 WHERE email = ?', [userEmail]);
-      console.log('User onboarded successfully');
-    }
-  } catch (error) {
-    console.error('Error checking enrollment and setting onboarded status:', error);
-  }
-}
-
-app.get(['/successful-onboarding', '/successful-onboarding.html'], isAuthenticated, (req, res) => {
+// Route to serve successful-onboarding.html
+app.get('/successful-onboarding', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, '/public/successful-onboarding.html'));
 });
 
@@ -409,4 +394,4 @@ app.get(['/', '/index.html'], isAuthenticatedAndOnboarded, (req, res) => {
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`)); 
