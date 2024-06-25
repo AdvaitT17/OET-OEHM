@@ -377,6 +377,75 @@ app.post('/api/enroll', isAuthenticated, async (req, res) => {
   }
 });
 
+// Route to get completed courses count (remains the same)
+app.get('/api/completed-courses', isAuthenticated, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT COUNT(*) as count FROM enrollments WHERE email = ? AND course_completed = 1',
+      [req.user.email]
+    );
+    res.json({ count: rows[0].count });
+  } catch (error) {
+    console.error('Error fetching completed courses:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Route to get enrolled courses count for current semester
+app.get('/api/enrolled-courses', isAuthenticated, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT COUNT(*) as count FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ? AND e.enrolled_semester = u.semester',
+      [req.user.email]
+    );
+    res.json({ count: rows[0].count });
+  } catch (error) {
+    console.error('Error fetching enrolled courses:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Route to get total learning hours for current semester
+app.get('/api/total-learning-hours', isAuthenticated, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT SUM(e.total_hours) as total FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ? AND e.enrolled_semester = u.semester',
+      [req.user.email]
+    );
+    res.json({ total: rows[0].total || 0 });
+  } catch (error) {
+    console.error('Error fetching total learning hours:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Route to get progress for current semester (online courses only)
+app.get('/api/progress', isAuthenticated, async (req, res) => {
+  try {
+    const [totalRows] = await pool.query(
+      'SELECT COUNT(*) as total FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ? AND e.enrolled_semester = u.semester AND e.mode = "ONLINE"',
+      [req.user.email]
+    );
+    const [completedRows] = await pool.query(
+      'SELECT COUNT(*) as completed FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ? AND e.enrolled_semester = u.semester AND e.mode = "ONLINE" AND e.course_completed = 1',
+      [req.user.email]
+    );
+    
+    const total = totalRows[0].total;
+    const completed = completedRows[0].completed;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    res.json({ 
+      total: total,
+      completed: completed,
+      percentage: percentage
+    });
+  } catch (error) {
+    console.error('Error fetching progress:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // Route to serve successful-onboarding.html
 app.get('/successful-onboarding', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, '/public/successful-onboarding.html'));
