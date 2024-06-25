@@ -124,17 +124,20 @@ app.get('/onboarding.html', isAuthenticated, (req, res) => {
 });
 
 // User service or utility function
-const getUserData = async (req, res) => {
+const getUserData = async (req) => {
   if (!req.user) {
     return null;
   }
 
+  const [userRows] = await pool.query('SELECT * FROM users WHERE email = ?', [req.user.email]);
+  const user = userRows[0];
+
   const sanitizedUser = {
-    name: req.user.name,
-    email: req.user.email,
-    profile_picture: req.user.profile_picture,
-    semester: req.user.semester,
-    onboarded: req.user.onboarded,
+    name: user.name,
+    email: user.email,
+    profile_picture: user.profile_picture,
+    semester: user.semester,
+    onboarded: user.onboarded,
   };
 
   return sanitizedUser;
