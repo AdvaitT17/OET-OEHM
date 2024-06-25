@@ -12,67 +12,22 @@ document.addEventListener('DOMContentLoaded', async function() {
   let userSemester = '';
   let userEmail = '';
 
-  async function initializeUserData() {
-    try {
-      const response = await fetch('/user');
-      const userData = await response.json();
-      console.log('User data:', userData);
-      if (userData.user) {
-        document.getElementById('name').value = userData.user.name || '';
-        document.getElementById('email').value = userData.user.email || '';
-        if (userData.user.profile_picture) {
-          document.getElementById('profilePicture').src = userData.user.profile_picture;
-        }
-        userSemester = userData.user.semester;
-        userEmail = userData.user.email;
-        
-        handleSemesterVII(userSemester);
+  try {
+    const userData = await fetch('/user').then(response => response.json());
+    console.log('User data:', userData);
+    if (userData.user) {
+      document.getElementById('name').value = userData.user.name || '';
+      document.getElementById('email').value = userData.user.email || '';
+      if (userData.user.profile_picture) {
+        document.getElementById('profilePicture').src = userData.user.profile_picture;
       }
-      attendanceVerified = await checkAttendanceVerified();
-      console.log('Attendance verified:', attendanceVerified);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
+      userSemester = userData.user.semester;
+      userEmail = userData.user.email;
     }
-  }
-
-  function handleSemesterVII(semester) {
-    if (semester === 'VII') {
-      const oehmFieldset = document.querySelector('.wizard-fieldset:nth-child(3)');
-      if (oehmFieldset) {
-        oehmFieldset.style.display = 'none';
-      }
-      
-      const nextButton2 = document.getElementById('nextButton2');
-      if (nextButton2) {
-        nextButton2.addEventListener('click', function(e) {
-          e.preventDefault();
-          document.querySelector('.wizard-fieldset:nth-child(4)').classList.add('show');
-          this.closest('.wizard-fieldset').classList.remove('show');
-        });
-      }
-
-      const summaryFieldset = document.querySelector('.wizard-fieldset:nth-child(4)');
-      if (summaryFieldset) {
-        const previousButton = summaryFieldset.querySelector('.form-wizard-previous-btn');
-        if (previousButton) {
-          previousButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            summaryFieldset.classList.remove('show');
-            document.querySelector('.wizard-fieldset:nth-child(2)').classList.add('show');
-          });
-        }
-      }
-
-      const progressSteps = document.querySelectorAll('.form-wizard-steps li');
-      if (progressSteps.length >= 3) {
-        progressSteps[2].style.display = 'none';
-        progressSteps.forEach(step => {
-          if (step.style.display !== 'none') {
-            step.style.width = '33.33%';
-          }
-        });
-      }
-    }
+    attendanceVerified = await checkAttendanceVerified();
+    console.log('Attendance verified:', attendanceVerified);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
   }
 
   async function fetchCourses(isOnline) {
@@ -192,101 +147,34 @@ document.addEventListener('DOMContentLoaded', async function() {
     summaryContainer.innerHTML = '';
 
     if (selectedCourses.length === 0) {
-        summaryContainer.innerHTML = '<p class="no-courses-message">No courses selected yet.</p>';
-        return;
+      summaryContainer.innerHTML = '<p>No courses selected yet.</p>';
+      return;
     }
 
-    const summaryTitle = document.createElement('h2');
-    summaryTitle.className = 'summary-title';
-    summaryTitle.textContent = 'Summary';
-    summaryContainer.appendChild(summaryTitle);
+    const summaryTable = document.createElement('table');
+    summaryTable.classList.add('summary-table');
 
-    const courseCardsContainer = document.createElement('div');
-    courseCardsContainer.className = 'course-cards';
-
-    selectedCourses.forEach(course => {
-        const card = document.createElement('div');
-        card.className = `course-card ${course.mode}`;
-
-        const cardHeader = document.createElement('div');
-        cardHeader.className = 'course-card-header';
-
-        const courseName = document.createElement('span');
-        courseName.textContent = course.course_name;
-        cardHeader.appendChild(courseName);
-
-        const modeBadge = document.createElement('span');
-        modeBadge.className = 'mode-badge';
-        modeBadge.textContent = course.mode.charAt(0).toUpperCase() + course.mode.slice(1);
-        cardHeader.appendChild(modeBadge);
-
-        const cardBody = document.createElement('div');
-        cardBody.className = 'course-card-body';
-
-        const infoItems = course.mode === 'online' ?
-            [
-                { label: 'University', value: course.university },
-                { label: 'Domain', value: course.domain },
-                { label: 'Type', value: course.type, isType: true },
-                { label: 'Hours', value: course.hours || 'N/A' },
-                { label: 'Peer Graded', value: course.peer_graded ? 'Yes' : 'No' }
-            ] :
-            [
-                { label: 'Faculty', value: course.faculty_name },
-                { label: 'Semester', value: course.semester },
-                { label: 'Type', value: course.type, isType: true },
-                { label: 'Email', value: course.faculty_email }
-            ];
-
-        infoItems.forEach(item => {
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'course-info';
-
-            const label = document.createElement('span');
-            label.className = 'course-info-label';
-            label.textContent = `${item.label}:`;
-
-            const value = document.createElement('span');
-            value.className = 'course-info-value';
-            
-            if (item.isType) {
-                value.className += ` course-type course-type-${item.value}`;
-            }
-            
-            value.textContent = item.value;
-
-            infoDiv.appendChild(label);
-            infoDiv.appendChild(value);
-            cardBody.appendChild(infoDiv);
-        });
-
-        card.appendChild(cardHeader);
-        card.appendChild(cardBody);
-        courseCardsContainer.appendChild(card);
+    const headerRow = summaryTable.insertRow();
+    const headers = ['Course Name', 'University/Faculty', 'Domain/Semester', 'Difficulty/Email', 'Language/Type', 'Hours', 'Mode'];
+    headers.forEach(header => {
+      const th = document.createElement('th');
+      th.textContent = header;
+      headerRow.appendChild(th);
     });
 
-    summaryContainer.appendChild(courseCardsContainer);
+    selectedCourses.forEach(course => {
+      const row = summaryTable.insertRow();
+      row.insertCell().textContent = course.course_name;
+      row.insertCell().textContent = course.mode === 'online' ? course.university : course.faculty_name;
+      row.insertCell().textContent = course.mode === 'online' ? course.domain : course.semester;
+      row.insertCell().textContent = course.mode === 'online' ? course.difficulty_level : course.faculty_email;
+      row.insertCell().textContent = course.mode === 'online' ? course.language : course.course_type;
+      row.insertCell().textContent = course.hours || 'N/A';
+      row.insertCell().textContent = course.mode;
+    });
 
-    // Add button container
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'button-container';
-
-    // Previous button
-    const previousButton = document.createElement('button');
-    previousButton.className = 'form-wizard-button form-wizard-previous-btn';
-    previousButton.textContent = 'Previous';
-    previousButton.addEventListener('click', goToPreviousStep);
-    buttonContainer.appendChild(previousButton);
-
-    // Submit button
-    const submitButton = document.createElement('button');
-    submitButton.className = 'form-wizard-button form-wizard-submit';
-    submitButton.textContent = 'Submit';
-    submitButton.addEventListener('click', submitForm);
-    buttonContainer.appendChild(submitButton);
-
-    summaryContainer.appendChild(buttonContainer);
-}
+    summaryContainer.appendChild(summaryTable);
+  }
 
   function getCurrentAcademicYear() {
     const currentDate = new Date();
@@ -321,9 +209,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.error('Error in updateUserData:', error);
         throw error;
     }
-  }
+}
 
-  document.getElementById('nextButton1').addEventListener('click', async function(e) {
+document.getElementById('nextButton1').addEventListener('click', async function(e) {
     e.preventDefault();
     
     if (!document.getElementById('acknowledge').checked) {
@@ -343,13 +231,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         const result = await updateUserData(userData);
         console.log('Update user data result:', result);
         if (result.success) {
+            // Update userSemester
             userSemester = userData.semester;
-            handleSemesterVII(userSemester);
+            // Move to the next step & disable first step fields
             toggleFormFields(true);
+            // Reinitialize tables with updated semester
             await setupTable("#OETCoursesTable");
-            if (userSemester !== 'VII') {
-                await setupTable("#OEHMCoursesTable");
-            }
+            await setupTable("#OEHMCoursesTable");
         } else {
             console.error('Update failed:', result);
             alert('Failed to update user data. Please try again. Error: ' + (result.message || 'Unknown error'));
@@ -358,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.error('Error updating user data:', error);
         alert('An error occurred while updating user data. Please try again. Error: ' + error.message);
     }
-  });
+});
 
   async function checkOnboardingStep() {
     try {
@@ -366,6 +254,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       const data = await response.json();
       
       if (data.step > 1) {
+        // Disable first step fields and move to the appropriate step
         toggleFormFields(true);
         moveToStep(data.step);
       }
@@ -375,6 +264,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
   function moveToStep(step) {
+    const steps = document.querySelectorAll('.form-wizard-steps li');
     const fieldsets = document.querySelectorAll('.wizard-fieldset');
 
     fieldsets.forEach((fieldset, index) => {
@@ -396,80 +286,77 @@ document.addEventListener('DOMContentLoaded', async function() {
   function enrollCourses() {
     console.log('Enrollment process started');
     console.log('Selected courses:', JSON.stringify(selectedCourses, null, 2));
-
+  
     if (selectedCourses.length === 0) {
       alert('Please select at least one course to enroll.');
       return;
     }
-
+  
     const onlineCourses = selectedCourses.filter(course => course.mode === 'online');
     const offlineCourses = selectedCourses.filter(course => course.mode === 'offline');
-
+  
     const onlineOETCourses = onlineCourses.filter(course => course.type === 'OET');
     const onlineOEHMCourses = onlineCourses.filter(course => course.type === 'OEHM');
     const offlineOETCourses = offlineCourses.filter(course => course.type === 'OET');
     const offlineOEHMCourses = offlineCourses.filter(course => course.type === 'OEHM');
-
-    if (userSemester === 'VII') {
-      if (onlineOETCourses.length === 0 && offlineOETCourses.length === 0) {
-        alert('Please select at least one OET course (online or offline).');
-        return;
-      }
-    } else {
-      const hasOnlineOET = onlineOETCourses.length > 0;
-      const hasOnlineOEHM = onlineOEHMCourses.length > 0;
-      const hasOfflineOET = offlineOETCourses.length > 0;
-      const hasOfflineOEHM = offlineOEHMCourses.length > 0;
-
-      if (!((hasOnlineOET && hasOnlineOEHM) || 
-            (hasOfflineOET && hasOfflineOEHM) || 
-            (hasOnlineOET && hasOfflineOEHM) || 
-            (hasOfflineOET && hasOnlineOEHM))) {
-        alert('Invalid combination of courses. Please select either:\n' +
-              '1. Online OET and Online OEHM\n' +
-              '2. Offline OET and Offline OEHM\n' +
-              '3. Online OET and Offline OEHM\n' +
-              '4. Offline OET and Online OEHM');
-        return;
-      }
+  
+    // Check for valid combination
+    const hasOnlineOET = onlineOETCourses.length > 0;
+    const hasOnlineOEHM = onlineOEHMCourses.length > 0;
+    const hasOfflineOET = offlineOETCourses.length > 0;
+    const hasOfflineOEHM = offlineOEHMCourses.length > 0;
+  
+    if (!((hasOnlineOET && hasOnlineOEHM) || 
+          (hasOfflineOET && hasOfflineOEHM) || 
+          (hasOnlineOET && hasOfflineOEHM) || 
+          (hasOfflineOET && hasOnlineOEHM))) {
+      alert('Invalid combination of courses. Please select either:\n' +
+            '1. Online OET and Online OEHM\n' +
+            '2. Offline OET and Offline OEHM\n' +
+            '3. Online OET and Offline OEHM\n' +
+            '4. Offline OET and Online OEHM');
+      return;
     }
-
+  
+    // Offline courses validation
     if (offlineCourses.length > 0) {
-      if (offlineOETCourses.length > 1 || (userSemester !== 'VII' && offlineOEHMCourses.length > 1)) {
-        alert('For offline courses, you can select at most 1 OET course' + (userSemester !== 'VII' ? ' and 1 OEHM course' : '') + '.');
+      if (offlineOETCourses.length > 1 || offlineOEHMCourses.length > 1) {
+        alert('For offline courses, you can select at most 1 OET course and 1 OEHM course.');
         return;
       }
     }
-
+  
+    // Online courses validation
     if (onlineCourses.length > 0) {
+      // Check total hours for OET
       const totalOETHours = onlineOETCourses.reduce((sum, course) => sum + parseInt(course.hours || 0), 0);
       if (onlineOETCourses.length > 0 && (totalOETHours < 30 || totalOETHours > 45)) {
         alert('Total hours for online OET courses must be between 30 and 45.');
         return;
       }
-
-      if (userSemester !== 'VII') {
-        const totalOEHMHours = onlineOEHMCourses.reduce((sum, course) => sum + parseInt(course.hours || 0), 0);
-        if (onlineOEHMCourses.length > 0 && (totalOEHMHours < 30 || totalOEHMHours > 45)) {
-          alert('Total hours for online OEHM courses must be between 30 and 45.');
-          return;
-        }
-      }
-
-      if (onlineOETCourses.length > 5 || (userSemester !== 'VII' && onlineOEHMCourses.length > 5)) {
-        alert('You can select at most 5 online courses for each type' + (userSemester !== 'VII' ? ' (OET and OEHM)' : '') + '.');
+  
+      // Check total hours for OEHM
+      const totalOEHMHours = onlineOEHMCourses.reduce((sum, course) => sum + parseInt(course.hours || 0), 0);
+      if (onlineOEHMCourses.length > 0 && (totalOEHMHours < 30 || totalOEHMHours > 45)) {
+        alert('Total hours for online OEHM courses must be between 30 and 45.');
         return;
       }
-
-      if (userSemester !== 'VII') {
-        const allOnlineCourseIds = new Set(onlineCourses.map(course => course.course_id));
-        if (allOnlineCourseIds.size !== onlineCourses.length) {
-          alert('A course selected in OET cannot be selected again in OEHM.');
-          return;
-        }
+  
+      // Check course count
+      if (onlineOETCourses.length > 5 || onlineOEHMCourses.length > 5) {
+        alert('You can select at most 5 online courses for each type (OET and OEHM).');
+        return;
+      }
+  
+      // Check for duplicate courses between OET and OEHM
+      const allOnlineCourseIds = new Set(onlineCourses.map(course => course.course_id));
+      if (allOnlineCourseIds.size !== onlineCourses.length) {
+        alert('A course selected in OET cannot be selected again in OEHM.');
+        return;
       }
     }
-
+  
+    // Prepare enrollment data
     const enrollmentData = selectedCourses.map(course => ({
       email: userEmail,
       course_id: course.course_id || course.course_code,
@@ -479,9 +366,10 @@ document.addEventListener('DOMContentLoaded', async function() {
       enrolled_semester: userSemester,
       enrolled_academic_year: getCurrentAcademicYear()
     }));
-
+  
     console.log('Enrollment data:', JSON.stringify(enrollmentData, null, 2));
-
+  
+    // Enroll courses
     fetch('/api/enroll', {
       method: 'POST',
       headers: {
@@ -510,42 +398,30 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  function checkAttendanceVerified() {
-    return fetch('/checkAttendance')
-      .then(response => response.json())
-      .then(data => {
-        console.log('Attendance verification response:', data);
-        return data.attendanceVerified;
-      })
-      .catch(error => {
-        console.error('Error checking attendance:', error);
-        return false;
-      });
-  }
-
-  // Initialize user data and set up tables
-  await initializeUserData();
   await setupTable("#OETCoursesTable");
-  if (userSemester !== 'VII') {
-    await setupTable("#OEHMCoursesTable");
-  }
+  await setupTable("#OEHMCoursesTable");
   await checkOnboardingStep();
 
   document.getElementById('finalSubmit').addEventListener('click', enrollCourses);
 
   document.getElementById('semesterSelect').addEventListener('change', async function() {
     userSemester = this.value;
-    handleSemesterVII(userSemester);
     await setupTable("#OETCoursesTable");
-    if (userSemester !== 'VII') {
-      await setupTable("#OEHMCoursesTable");
-    } else {
-      const oehmTable = document.querySelector("#OEHMCoursesTable");
-      if (oehmTable) {
-        oehmTable.closest('.card').style.display = 'none';
-      }
-    }
+    await setupTable("#OEHMCoursesTable");
   });
 
   console.log("Onboarding script completed");
 });
+
+function checkAttendanceVerified() {
+  return fetch('/checkAttendance')
+    .then(response => response.json())
+    .then(data => {
+      console.log('Attendance verification response:', data);
+      return data.attendanceVerified;
+    })
+    .catch(error => {
+      console.error('Error checking attendance:', error);
+      return false;
+    });
+}

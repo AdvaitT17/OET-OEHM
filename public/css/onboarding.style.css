@@ -1,506 +1,226 @@
-:root {
-    --online-primary: #3498db;
-    --online-secondary: #2980b9;
-    --offline-primary: #e74c3c;
-    --offline-secondary: #c0392b;
-    --background: #ecf0f1;
-    --text-dark: #34495e;
-    --text-light: #ffffff;
-    --card-bg: #ffffff;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-    body {
-    color: #444444;
-    font-family: 'Roboto', sans-serif;
-    font-size: 16px;
-    font-weight: 300;
-    margin: 0;
-    padding: 0;
-    }
-    .wizard-content-left {
-    background-blend-mode: darken;
-    background-color: rgba(0, 0, 0, 0.45);
-    background-image: url("https://i.ibb.co/X292hJF/form-wizard-bg-2.jpg");
-    background-position: center center;
-    background-size: cover;
-    height: 100vh;
-    padding: 30px;
-    }
-    .wizard-content-left h1 {
-    color: #ffffff;
-    font-size: 38px;
-    font-weight: 600;
-    padding: 12px 20px;
-    text-align: center;
-    }
+body {
+color: #444444;
+font-family: 'Roboto', sans-serif;
+font-size: 16px;
+font-weight: 300;
+margin: 0;
+padding: 0;
+}
+.wizard-content-left {
+background-blend-mode: darken;
+background-color: rgba(0, 0, 0, 0.45);
+background-image: url("https://i.ibb.co/X292hJF/form-wizard-bg-2.jpg");
+background-position: center center;
+background-size: cover;
+height: 100vh;
+padding: 30px;
+}
+.wizard-content-left h1 {
+color: #ffffff;
+font-size: 38px;
+font-weight: 600;
+padding: 12px 20px;
+text-align: center;
+}
 
-    .form-wizard {
-    color: #888888;
-    padding: 30px;
-    }
-    .form-wizard .wizard-form-radio {
-    display: inline-block;
-    margin-left: 5px;
-    position: relative;
-    }
-    .form-wizard .wizard-form-radio input[type="radio"] {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    -ms-appearance: none;
-    -o-appearance: none;
-    appearance: none;
-    background-color: #dddddd;
-    height: 25px;
-    width: 25px;
-    display: inline-block;
-    vertical-align: middle;
-    border-radius: 50%;
-    position: relative;
-    cursor: pointer;
-    }
-    .form-wizard .wizard-form-radio input[type="radio"]:focus {
-    outline: 0;
-    }
-    .form-wizard .wizard-form-radio input[type="radio"]:checked {
-    background-color: #fb1647;
-    }
-    .form-wizard .wizard-form-radio input[type="radio"]:checked::before {
-    content: "";
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    display: inline-block;
-    background-color: #ffffff;
-    border-radius: 50%;
-    left: 1px;
-    right: 0;
-    margin: 0 auto;
-    top: 8px;
-    }
-    .form-wizard .wizard-form-radio input[type="radio"]:checked::after {
-    content: "";
-    display: inline-block;
-    -moz-animation: click-radio-wave 0.65s;
-    animation: click-radio-wave 0.65s;
-    background: #000000;
-    content: '';
-    display: block;
-    position: relative;
-    z-index: 100;
-    border-radius: 50%;
-    }
-    .form-wizard .wizard-form-radio input[type="radio"] ~ label {
-    padding-left: 10px;
-    cursor: pointer;
-    }
-    .form-wizard .form-wizard-header {
-    text-align: center;
-    }
-    .form-wizard .form-wizard-next-btn, .form-wizard .form-wizard-previous-btn, .form-wizard .form-wizard-submit {
-    background-color: #b7202e;
-    color: #ffffff;
-    display: inline-block;
-    min-width: 100px;
-    min-width: 120px;
-    padding: 10px;
-    text-align: center;
-    }
-    .form-wizard .form-wizard-next-btn:hover, .form-wizard .form-wizard-next-btn:focus, .form-wizard .form-wizard-previous-btn:hover, .form-wizard .form-wizard-previous-btn:focus, .form-wizard .form-wizard-submit:hover, .form-wizard .form-wizard-submit:focus {
-    color: #ffffff;
-    opacity: 0.6;
-    text-decoration: none;
-    }
-    .form-wizard .wizard-fieldset {
-    display: none;
-    }
-    .form-wizard .wizard-fieldset.show {
-    display: block;
-    }
-    .form-wizard .wizard-form-error {
-    display: none;
-    background-color: #d70b0b;
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 2px;
-    width: 100%;
-    }
-    .form-wizard .form-wizard-previous-btn {
-    background-color: #ed1c24;
-    }
-    .form-wizard .form-control {
-    font-weight: 300;
-    height: auto !important;
-    padding: 15px;
-    color: #888888;
-    background-color: #f1f1f1;
-    border: none;
-    }
-    .form-wizard .form-control:focus {
-    box-shadow: none;
-    }
-    .form-wizard .form-group {
-    position: relative;
-    margin: 25px 0;
-    }
-    .form-wizard .wizard-form-text-label {
-    position: absolute;
-    left: 10px;
-    top: 16px;
-    transition: 0.2s linear all;
-    }
-    .form-wizard .focus-input .wizard-form-text-label {
-    color: #d65470;
-    top: -25px;
-    transition: 0.2s linear all;
-    font-size: 15px;
-    }
-    .form-wizard .form-wizard-steps {
-    margin: 30px 0;
-    }
-    .form-wizard .form-wizard-steps li {
-    width: 25%;
-    float: left;
-    position: relative;
-    }
-    .form-wizard .form-wizard-steps li::after {
-    background-color: #f3f3f3;
-    content: "";
-    height: 5px;
-    left: 0;
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 100%;
-    border-bottom: 1px solid #dddddd;
-    border-top: 1px solid #dddddd;
-    }
-    .form-wizard .form-wizard-steps li span {
-    background-color: #dddddd;
-    border-radius: 50%;
-    display: inline-block;
-    height: 40px;
-    line-height: 40px;
-    position: relative;
-    text-align: center;
-    width: 40px;
-    z-index: 1;
-    }
-    .form-wizard .form-wizard-steps li:last-child::after {
-    width: 50%;
-    }
-    .form-wizard .form-wizard-steps li.active span, .form-wizard .form-wizard-steps li.activated span {
-    background-color: #c6154f;
-    color: #ffffff;
-    }
-    .form-wizard .form-wizard-steps li.active::after, .form-wizard .form-wizard-steps li.activated::after {
-    background-color: #c6154f;
-    left: 50%;
-    width: 50%;
-    border-color: #c6154f;
-    }
-    .form-wizard .form-wizard-steps li.activated::after {
-    width: 100%;
-    border-color: #c6154f;
-    }
-    .form-wizard .form-wizard-steps li:last-child::after {
-    left: 0;
-    }
-    .form-wizard .wizard-password-eye {
-    position: absolute;
-    right: 32px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    }
-    @keyframes click-radio-wave {
-    0% {
-    width: 25px;
-    height: 25px;
-    opacity: 0.35;
-    position: relative;
-    }
-    100% {
-    width: 60px;
-    height: 60px;
-    margin-left: -15px;
-    margin-top: -15px;
-    opacity: 0.0;
-    }
-    }
-    @media screen and (max-width: 767px) {
-    .wizard-content-left {
-    height: auto;
-    }
-    }
-
-#selectedCoursesContainer {
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-  
-  .summary-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    text-align: center;
-    margin-bottom: 2rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-  }
-  
-  .course-cards {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2rem;
-  }
-  
-  .course-card {
-    flex: 0 1 calc(33.333% - 2rem);
-    min-width: 300px;
-    max-width: 400px;
-    margin-bottom: 2rem;
-    background-color: var(--card-bg);
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    position: relative;
-  }
-  
-  .course-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-  }
-  
-  .course-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 5px;
-    background: linear-gradient(to right, var(--online-primary), var(--offline-primary));
-  }
-  
-  .course-card-header {
-    padding: 1.5rem;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text-light);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    min-height: 100px;
-  }
-  
-  .course-card-header::after {
-    content: '';
-    position: absolute;
-    bottom: -20px;
-    right: -20px;
-    width: 60px;
-    height: 60px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-  }
-  
-  .course-card.online .course-card-header {
-    background-color: var(--online-primary);
-  }
-  
-  .course-card.offline .course-card-header {
-    background-color: var(--offline-primary);
-  }
-  
-  .course-card-body {
-    padding: 1.5rem;
-  }
-  
-  .course-info {
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-  }
-  
-  .course-info-label {
-    font-weight: 600;
-    color: var(--text-dark);
-    font-size: 0.9rem;
-    min-width: 100px;
-  }
-  
-  .course-info-value {
-    color: var(--text-dark);
-    font-size: 1rem;
-  }
-  
-  .course-type {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  
-  .course-type-OET {
-    background-color: var(--online-primary);
-    color: var(--text-light);
-  }
-  
-  .course-type-OEHM {
-    background-color: var(--offline-primary);
-    color: var(--text-light);
-  }
-  
-  .mode-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    background-color: rgba(255, 255, 255, 0.2);
-    color: var(--text-light);
-    white-space: nowrap;
-    margin-left: 10px;
-    flex-shrink: 0;
-  }
-  
-  .button-container {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 2rem;
-  }
-  
-  .form-wizard-button {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .form-wizard-previous-btn {
-    background-color: var(--text-dark);
-    color: var(--text-light);
-  }
-  
-  .form-wizard-previous-btn:hover {
-    background-color: #2c3e50;
-  }
-  
-  .form-wizard-submit {
-    background-color: var(--online-primary);
-    color: var(--text-light);
-  }
-  
-  .form-wizard-submit:hover {
-    background-color: var(--online-secondary);
-  }
-  
-  .no-courses-message {
-    text-align: center;
-    font-size: 1.2rem;
-    color: #4a5568;
-    padding: 2rem;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  @media screen and (max-width: 767px) {
-    .course-card {
-      flex: 0 1 100%;
-    }
-    
-    .summary-title {
-      font-size: 2rem;
-    }
-  }
-  
-  @media screen and (min-width: 768px) and (max-width: 1199px) {
-    .course-card {
-      flex: 0 1 calc(50% - 2rem);
-    }
-  }
-  
-  /* Center buttons only on the summary page */
-  .wizard-fieldset:last-child .form-group.clearfix {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 2rem;
-  }
-  
-  .wizard-fieldset:last-child .form-wizard-previous-btn,
-  .wizard-fieldset:last-child .form-wizard-submit {
-    float: none;
-  }
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
- }
-
- .toggle-container {
-    display: flex;
-    align-items: center;
- }
- .switch {
-   position: relative;
-   display: inline-block;
-   width: 60px;
-   height: 34px;
-   margin: 0 10px;
- }
- .switch input {
-   opacity: 0;
-   width: 0;
-   height: 0;
- }
- .slider {
-   position: absolute;
-   cursor: pointer;
-   top: 0;
-   left: 0;
-   right: 0;
-   bottom: 0;
-   background-color: #ccc;
-   transition: .4s;
- }
- .slider:before {
-   position: absolute;
-   content: "";
-   height: 26px;
-   width: 26px;
-   left: 4px;
-   bottom: 4px;
-   background-color: white;
-   transition: .4s;
- }
- input:checked + .slider {
-   background-color: #2196F3;
- }
- input:checked + .slider:before {
-   transform: translateX(26px);
- }
- .slider.round {
-   border-radius: 34px;
- }
- .slider.round:before {
-   border-radius: 50%;
- }
+.form-wizard {
+color: #888888;
+padding: 30px;
+}
+.form-wizard .wizard-form-radio {
+display: inline-block;
+margin-left: 5px;
+position: relative;
+}
+.form-wizard .wizard-form-radio input[type="radio"] {
+-webkit-appearance: none;
+-moz-appearance: none;
+-ms-appearance: none;
+-o-appearance: none;
+appearance: none;
+background-color: #dddddd;
+height: 25px;
+width: 25px;
+display: inline-block;
+vertical-align: middle;
+border-radius: 50%;
+position: relative;
+cursor: pointer;
+}
+.form-wizard .wizard-form-radio input[type="radio"]:focus {
+outline: 0;
+}
+.form-wizard .wizard-form-radio input[type="radio"]:checked {
+background-color: #fb1647;
+}
+.form-wizard .wizard-form-radio input[type="radio"]:checked::before {
+content: "";
+position: absolute;
+width: 10px;
+height: 10px;
+display: inline-block;
+background-color: #ffffff;
+border-radius: 50%;
+left: 1px;
+right: 0;
+margin: 0 auto;
+top: 8px;
+}
+.form-wizard .wizard-form-radio input[type="radio"]:checked::after {
+content: "";
+display: inline-block;
+-moz-animation: click-radio-wave 0.65s;
+animation: click-radio-wave 0.65s;
+background: #000000;
+content: '';
+display: block;
+position: relative;
+z-index: 100;
+border-radius: 50%;
+}
+.form-wizard .wizard-form-radio input[type="radio"] ~ label {
+padding-left: 10px;
+cursor: pointer;
+}
+.form-wizard .form-wizard-header {
+text-align: center;
+}
+.form-wizard .form-wizard-next-btn, .form-wizard .form-wizard-previous-btn, .form-wizard .form-wizard-submit {
+background-color: #c6154f;
+color: #ffffff;
+display: inline-block;
+min-width: 100px;
+min-width: 120px;
+padding: 10px;
+text-align: center;
+}
+.form-wizard .form-wizard-next-btn:hover, .form-wizard .form-wizard-next-btn:focus, .form-wizard .form-wizard-previous-btn:hover, .form-wizard .form-wizard-previous-btn:focus, .form-wizard .form-wizard-submit:hover, .form-wizard .form-wizard-submit:focus {
+color: #ffffff;
+opacity: 0.6;
+text-decoration: none;
+}
+.form-wizard .wizard-fieldset {
+display: none;
+}
+.form-wizard .wizard-fieldset.show {
+display: block;
+}
+.form-wizard .wizard-form-error {
+display: none;
+background-color: #d70b0b;
+position: absolute;
+left: 0;
+right: 0;
+bottom: 0;
+height: 2px;
+width: 100%;
+}
+.form-wizard .form-wizard-previous-btn {
+background-color: #fb1647;
+}
+.form-wizard .form-control {
+font-weight: 300;
+height: auto !important;
+padding: 15px;
+color: #888888;
+background-color: #f1f1f1;
+border: none;
+}
+.form-wizard .form-control:focus {
+box-shadow: none;
+}
+.form-wizard .form-group {
+position: relative;
+margin: 25px 0;
+}
+.form-wizard .wizard-form-text-label {
+position: absolute;
+left: 10px;
+top: 16px;
+transition: 0.2s linear all;
+}
+.form-wizard .focus-input .wizard-form-text-label {
+color: #d65470;
+top: -25px;
+transition: 0.2s linear all;
+font-size: 15px;
+}
+.form-wizard .form-wizard-steps {
+margin: 30px 0;
+}
+.form-wizard .form-wizard-steps li {
+width: 25%;
+float: left;
+position: relative;
+}
+.form-wizard .form-wizard-steps li::after {
+background-color: #f3f3f3;
+content: "";
+height: 5px;
+left: 0;
+position: absolute;
+right: 0;
+top: 50%;
+transform: translateY(-50%);
+width: 100%;
+border-bottom: 1px solid #dddddd;
+border-top: 1px solid #dddddd;
+}
+.form-wizard .form-wizard-steps li span {
+background-color: #dddddd;
+border-radius: 50%;
+display: inline-block;
+height: 40px;
+line-height: 40px;
+position: relative;
+text-align: center;
+width: 40px;
+z-index: 1;
+}
+.form-wizard .form-wizard-steps li:last-child::after {
+width: 50%;
+}
+.form-wizard .form-wizard-steps li.active span, .form-wizard .form-wizard-steps li.activated span {
+background-color: #c6154f;
+color: #ffffff;
+}
+.form-wizard .form-wizard-steps li.active::after, .form-wizard .form-wizard-steps li.activated::after {
+background-color: #c6154f;
+left: 50%;
+width: 50%;
+border-color: #c6154f;
+}
+.form-wizard .form-wizard-steps li.activated::after {
+width: 100%;
+border-color: #c6154f;
+}
+.form-wizard .form-wizard-steps li:last-child::after {
+left: 0;
+}
+.form-wizard .wizard-password-eye {
+position: absolute;
+right: 32px;
+top: 50%;
+transform: translateY(-50%);
+cursor: pointer;
+}
+@keyframes click-radio-wave {
+0% {
+width: 25px;
+height: 25px;
+opacity: 0.35;
+position: relative;
+}
+100% {
+width: 60px;
+height: 60px;
+margin-left: -15px;
+margin-top: -15px;
+opacity: 0.0;
+}
+}
+@media screen and (max-width: 767px) {
+.wizard-content-left {
+height: auto;
+}
+}
