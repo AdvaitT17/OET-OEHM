@@ -18599,7 +18599,7 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
   --secondary-dark: #39987b; }
 
 [data-secondary="color_3"] {
-  --secondary: #FF6A59;
+  --secondary: #ed1c25;
   --secondary-dark: #ff3c26; }
 
 [data-secondary="color_4"] {
