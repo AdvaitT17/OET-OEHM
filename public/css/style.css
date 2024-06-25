@@ -13731,7 +13731,7 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
   .sidebar-right #sidebar_color_11 + label,
   .sidebar-right #secondary_color_11 + label,
   .sidebar-right #primary_color_11 + label {
-    background-color: #b7202e; }
+    background-color: #c6164f; }
   .sidebar-right #nav_header_color_12 + label,
   .sidebar-right #header_color_12 + label,
   .sidebar-right #sidebar_color_12 + label,
@@ -14594,7 +14594,7 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
 
 [data-nav-headerbg="color_11"][data-theme-version="dark"],
 [data-nav-headerbg="color_11"] {
-  --nav-headbg: #b7202e;
+  --nav-headbg: #c6164f;
   /* &[data-nav-headerbg="color_8"]{
 				.nav-header{
 					.brand-logo{
@@ -16300,7 +16300,7 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
 
 [data-sibebarbg="color_11"][data-theme-version="dark"],
 [data-sibebarbg="color_11"] {
-  --sidebar-bg: #b7202e;
+  --sidebar-bg: #c6164f;
   /* .hamburger .line{
 				background:$white;
 			} */
@@ -16369,7 +16369,7 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
 			} */ }
   [data-sibebarbg="color_11"][data-theme-version="dark"] .menu-toggle .dlabnav .metismenu li > ul,
   [data-sibebarbg="color_11"] .menu-toggle .dlabnav .metismenu li > ul {
-    background: #b7202e !important; }
+    background: #c6164f !important; }
   [data-sibebarbg="color_11"][data-theme-version="dark"] .dlabnav .metismenu ul a:before,
   [data-sibebarbg="color_11"] .dlabnav .metismenu ul a:before {
     background: rgba(255, 255, 255, 0.5); }
@@ -17883,7 +17883,7 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
 
 [data-headerbg="color_11"][data-theme-version="dark"],
 [data-headerbg="color_11"] {
-  --headerbg: #b7202e;
+  --headerbg: #c6164f;
   /* &[data-headerbg="color_8"]{
 					
 				.search-area .input-group-text,
@@ -18525,7 +18525,7 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
   --rgba-primary-9: rgba(103, 89, 209, 0.9); }
 
 [data-primary="color_11"] {
-  --primary: #b7202e;
+  --primary: #c6164f;
   --primary-hover: #98113d;
   --primary-dark: #3c0718;
   --rgba-primary-1: rgba(198, 22, 79, 0.1);
@@ -18631,7 +18631,7 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
   --secondary-dark: #4636c1; }
 
 [data-secondary="color_11"] {
-  --secondary: #b7202e;
+  --secondary: #c6164f;
   --secondary-dark: #98113d; }
 
 [data-secondary="color_12"] {
