@@ -138,17 +138,20 @@ app.get('/onboarding.html', isAuthenticated, (req, res) => {
 });
 
 // User service or utility function
-const getUserData = async (req, res) => {
+const getUserData = async (req) => {
   if (!req.user) {
     return null;
   }
 
+  const [userRows] = await pool.query('SELECT * FROM users WHERE email = ?', [req.user.email]);
+  const user = userRows[0];
+
   const sanitizedUser = {
-    name: req.user.name,
-    email: req.user.email,
-    profile_picture: req.user.profile_picture,
-    semester: req.user.semester,
-    onboarded: req.user.onboarded,
+    name: user.name,
+    email: user.email,
+    profile_picture: user.profile_picture,
+    semester: user.semester,
+    onboarded: user.onboarded,
   };
 
   return sanitizedUser;
@@ -287,6 +290,26 @@ app.get('/checkAttendance', isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error('Error checking attendance:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Route to fetch offline course data from the database
+app.get('/api/courses_offline', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        course_code, 
+        course_name, 
+        faculty_name, 
+        semester, 
+        faculty_email, 
+        course_type 
+      FROM courses_offline;
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching offline courses:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.toString() });
   }
 });
 
