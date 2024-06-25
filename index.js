@@ -6,34 +6,20 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mysql = require('mysql2/promise');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
-const cron = require('node-cron');
 
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT;
 
 const dbConfig = {
-  host: process.env.DB_HOST_LOCAL,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  connectTimeout: 60000, // 60 seconds
 };
 
 const pool = mysql.createPool({ ...dbConfig });
-
-// Periodic database ping
-const pingDatabase = async () => {
-  try {
-    await pool.query('SELECT 1');
-    console.log('Database pinged successfully');
-  } catch (error) {
-    console.error('Error pinging database:', error);
-  }
-};
-
-// Schedule the pingDatabase function to run every minute
-cron.schedule('* * * * *', pingDatabase);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
@@ -138,17 +124,20 @@ app.get('/onboarding.html', isAuthenticated, (req, res) => {
 });
 
 // User service or utility function
-const getUserData = async (req, res) => {
+const getUserData = async (req) => {
   if (!req.user) {
     return null;
   }
 
+  const [userRows] = await pool.query('SELECT * FROM users WHERE email = ?', [req.user.email]);
+  const user = userRows[0];
+
   const sanitizedUser = {
-    name: req.user.name,
-    email: req.user.email,
-    profile_picture: req.user.profile_picture,
-    semester: req.user.semester,
-    onboarded: req.user.onboarded,
+    name: user.name,
+    email: user.email,
+    profile_picture: user.profile_picture,
+    semester: user.semester,
+    onboarded: user.onboarded,
   };
 
   return sanitizedUser;
