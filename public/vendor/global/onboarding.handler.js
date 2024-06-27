@@ -11,6 +11,17 @@ document.addEventListener('DOMContentLoaded', async function() {
   let selectedCourses = [];
   let userSemester = '';
   let userEmail = '';
+  let previouslyTakenCourses = [];
+
+  async function fetchPreviouslyTakenCourses() {
+    try {
+      const response = await fetch('/api/previously-taken-courses');
+      if (!response.ok) throw new Error('Failed to fetch previously taken courses');
+      previouslyTakenCourses = await response.json();
+    } catch (error) {
+      console.error('Error fetching previously taken courses:', error);
+    }
+  }
 
   async function initializeUserData() {
     try {
@@ -95,24 +106,41 @@ document.addEventListener('DOMContentLoaded', async function() {
       $table.DataTable().destroy();
     }
     $table.empty();
-
+  
     const columns = isOnline ? [
       { data: "course_name", title: "Course Name" },
       { data: "university", title: "University" },
       { data: "domain", title: "Domain" },
       { data: "difficulty_level", title: "Difficulty" },
       { data: "language", title: "Language" },
-      { data: "hours", title: "Hours" }
+      { data: "hours", title: "Hours" },
+      { 
+        data: null, 
+        title: "Status",
+        render: function(data, type, row) {
+          return row.disabled ? 'Previously Taken' : 'Available';
+        }
+      }
     ] : [
       { data: "course_code", title: "Course Code" },
       { data: "course_name", title: "Course Name" },
       { data: "faculty_name", title: "Faculty Name" },
       { data: "semester", title: "Semester" },
-      { data: "faculty_email", title: "Faculty Email" }
+      { data: "faculty_email", title: "Faculty Email" },
+      { 
+        data: null, 
+        title: "Status",
+        render: function(data, type, row) {
+          return row.disabled ? 'Previously Taken' : 'Available';
+        }
+      }
     ];
-
+  
     const dataTable = $table.DataTable({
-      data: courses,
+      data: courses.map(course => ({
+        ...course,
+        disabled: previouslyTakenCourses.includes(course.course_id || course.course_code)
+      })),
       columns: columns,
       responsive: true,
       scrollX: false,
@@ -124,11 +152,18 @@ document.addEventListener('DOMContentLoaded', async function() {
           next: '<i class="fa fa-angle-double-right" aria-hidden="true"></i>',
           previous: '<i class="fa fa-angle-double-left" aria-hidden="true"></i>'
         }
+      },
+      createdRow: function(row, data, dataIndex) {
+        if (data.disabled) {
+          $(row).addClass('disabled');
+        }
       }
     });
-
+  
     $table.off('click', 'tbody tr').on('click', 'tbody tr', function() {
       const data = dataTable.row(this).data();
+      if (data.disabled) return; // Prevent selection of disabled rows
+  
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');
         selectedCourses = selectedCourses.filter(course => course.course_id !== data.course_id);
@@ -142,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
       displaySelectedCoursesSummary();
     });
-
+  
     return dataTable;
   }
 
@@ -524,6 +559,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
   // Initialize user data and set up tables
+  await fetchPreviouslyTakenCourses();
   await initializeUserData();
   await setupTable("#OETCoursesTable");
   if (userSemester !== 'VII') {

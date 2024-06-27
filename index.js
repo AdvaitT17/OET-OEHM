@@ -367,6 +367,19 @@ app.get('/api/completed-courses', isAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/api/previously-taken-courses', isAuthenticated, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT course_id FROM enrollments WHERE email = ? AND enrolled_semester < ?',
+      [req.user.email, req.user.semester]
+    );
+    res.json(rows.map(row => row.course_id));
+  } catch (error) {
+    console.error('Error fetching previously taken courses:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // Route to get enrolled courses count for current semester
 app.get('/api/enrolled-courses', isAuthenticated, async (req, res) => {
   try {
@@ -518,8 +531,17 @@ app.get('/auth/google/callback',
 );
 
 // Route to serve onboarding.html
-app.get('/onboarding', isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/onboarding.html'));
+app.get(['/onboarding', '/onboarding.html'], isAuthenticated, async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT onboarded FROM users WHERE email = ?', [req.user.email]);
+    if (rows.length > 0 && rows[0].onboarded === 1) {
+      return res.redirect('/'); // Redirect to dashboard if already onboarded
+    }
+    res.sendFile(path.join(__dirname, '/public/onboarding.html'));
+  } catch (error) {
+    console.error('Error checking onboarding status:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 // Route to serve index.html
