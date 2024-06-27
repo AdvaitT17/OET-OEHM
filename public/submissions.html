@@ -9,45 +9,22 @@
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <meta name="description" content="" />
       <meta name="format-detection" content="telephone=no">
-      <title>Dashboard | KJ Somaiya OET-OEHM Portal</title>
+      <title>Submissions | KJ Somaiya OET-OEHM Portal</title>
       <link rel="shortcut icon" type="image/png" href="images/favicon.png" />
       <link href="./vendor/jquery-nice-select/css/nice-select.css" rel="stylesheet">
-      <link href="./vendor/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
       <link href="./css/style.css" rel="stylesheet">
-      <style>
-         #newProgressChart {
-             width: 100%;
-             max-width: 250px;
-             margin: 0 auto;
-         }
-         .redial-content {
-             text-align: center;
-             margin-top: 20px;
-         }
-         /* Hide the old progress bar */
-         #redial {
-             display: none !important;
-         }
-      </style>
+      <link href="./css/submissions.style.css" rel="stylesheet">
    </head>
    <body>
-      <!--*******************
-         Preloader start
-         ********************-->
       <div id="preloader">
          <div class="lds-ripple">
             <div></div>
             <div></div>
          </div>
       </div>
-      <!--*******************
-         Preloader end
-         ********************-->
-      <!--**********************************
-         Main wrapper start
-         ***********************************-->
-      <div id="main-wrapper">
-         <div class="ellipse">
+<div id="main-wrapper">
+    <div class="ellipse">
             <svg class="green-line" width="669" height="487" viewBox="0 0 669 487" fill="none" xmlns="http://www.w3.org/2000/svg">
                <path d="M237.231 -68.6319V-68.6021L237.233 -68.5724C240.62 -11.7125 250.024 41.8582 269.813 81.245C289.627 120.683 319.922 146 365 146C385.587 146 411.761 133.509 439.623 113.32C467.532 93.0977 497.301 65.0267 525.114 33.5967C552.929 2.16452 578.809 -32.6519 598.929 -66.3803C619.03 -100.077 633.422 -132.754 638.209 -159.92C641.588 -173.074 642.414 -182.818 640.908 -189.917C639.382 -197.111 635.464 -201.562 629.562 -204.027C623.75 -206.455 616.074 -206.932 607.015 -206.43C598.241 -205.944 588.029 -204.527 576.749 -202.962L575.574 -202.799C528.514 -196.273 462.757 -187.599 400.301 -230.953C363.87 -256.242 335.385 -267.371 313.122 -267.543C290.75 -267.716 274.81 -256.826 263.567 -238.544C252.361 -220.322 245.792 -194.726 242.013 -165.305C238.231 -135.864 237.231 -102.487 237.231 -68.6319Z" stroke="url(#paint0_linear_1146_121)" stroke-opacity="0.2" stroke-width="2"/>
                <path d="M287.231 -67.4176V-67.3879L287.233 -67.3582C289.553 -28.4105 294.217 9.84134 306.007 38.3782C311.906 52.6574 319.615 64.5666 329.764 72.9092C339.931 81.2668 352.495 86 368 86C375.138 86 383.313 83.7364 392.143 79.7017C400.983 75.6628 410.535 69.8223 420.443 62.6034C440.259 48.1655 461.567 28.1615 481.528 5.85989C501.491 -16.4438 520.129 -41.0702 534.597 -64.767C549.044 -88.4293 559.379 -111.238 562.673 -129.918C564.991 -138.942 565.57 -145.674 564.523 -150.609C563.457 -155.638 560.702 -158.775 556.561 -160.504C552.509 -162.197 547.187 -162.52 540.969 -162.175C534.942 -161.841 527.931 -160.869 520.207 -159.797L519.394 -159.684C487.137 -155.211 442.184 -149.29 399.489 -178.927C374.503 -196.272 354.915 -203.942 339.561 -204.061C324.099 -204.18 313.08 -196.642 305.327 -184.036C297.612 -171.489 293.103 -153.893 290.511 -133.715C287.916 -113.517 287.231 -90.6247 287.231 -67.4176Z" stroke="url(#paint1_linear_1146_121)" stroke-opacity="0.2" stroke-width="2"/>
@@ -112,10 +89,7 @@
                </defs>
             </svg>
          </div>
-         <!--**********************************
-            Nav header start
-            ***********************************-->
-         <div class="nav-header">
+    <div class="nav-header">
             <a href="index.html" class="brand-logo">
                <svg viewBox="0 0 282.92 73.031" xmlns="http://www.w3.org/2000/svg">
                   <path fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width=".75" d="M80.444 53.99h167.17"/>
@@ -130,19 +104,13 @@
                </div>
             </div>
          </div>
-         <!--**********************************
-            Nav header end
-            ***********************************-->	
-         <!--**********************************
-            Header start
-            ***********************************-->
-         <div class="header">
+    <div class="header">
             <div class="header-content">
                <nav class="navbar navbar-expand">
                   <div class="collapse navbar-collapse justify-content-between">
                      <div class="header-left">
                         <div class="dashboard_bar">
-                           Dashboard
+                           Submissions
                         </div>
                      </div>
                      <div class="navbar-nav header-right">
@@ -158,17 +126,11 @@
                </nav>
             </div>
          </div>
-         <!--**********************************
-            Header end ti-comment-alt
-            ***********************************-->
-         <!--**********************************
-            Sidebar start
-            ***********************************-->
-         <div class="dlabnav">
+    <div class="dlabnav">
             <div class="dlabnav-scroll">
                <ul class="metismenu" id="menu">
                   <li>
-                     <a href="/" aria-expanded="false">
+                     <a class="has-arrow " href="/" aria-expanded="false">
                      <i class="bi bi-grid"></i>
                      <span class="nav-text">Dashboard</span>
                      </a>
@@ -180,7 +142,7 @@
                      </a>
                   </li>
                   <li>
-                     <a class="has-arrow " href="/submissions" aria-expanded="false">
+                     <a href="/submissions" aria-expanded="false">
                      <i class="bi bi-info-circle"></i>
                      <span class="nav-text">Submissions</span>
                      </a>
@@ -200,162 +162,48 @@
               </div>
             </div>
          </div>
-         <!--**********************************
-            Sidebar end
-            ***********************************-->
-         <!--**********************************
-            Content body start
-            ***********************************-->
-         <div class="content-body">
-            <!-- row -->
-            <div class="container-fluid">
-               <div class="row">
-                  <div class="col-xl-6 col-xxl-12">
-                     <div class="row">
-                        <div class="col-xl-12 col-xxl-6">
-                           <div class="card dlab-join-card h-auto">
-                              <div class="card-body">
-                                 <div class="dlab-media d-flex justify-content-between">
-                                    <div class="dlab-content">
-                                       <h4>KJSCE OET-OEHM Portal</h4>
-                                       <p>As per your syllabus SVU 2020 - You have choice based courses like Department Elective, Open Elective Technical (OET), Open Elective Humanities and Management OEHM from SY Semester V to TY Semester VII.</p>
-                                    </div>
-                                    <div class="dlab-img">
-                                       <img src="images/egucation-girl.png" alt="">
-                                    </div>
-                                    <div class="dlab-icon">
-                                       <img src="images/vector/calpng.png" alt="" class="cal-img">
-                                       <img src="images/vector/book.png" alt="" class="book-img">
-                                    </div>
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
-                        <div class="col-xl-12 bt-order">
-                           <div class="row">
-                              <div class="col-xl-4 col-sm-6">
-                                 <div class="dlab-cource bg-secondary">
-                                    <div class="d-flex align-items-center">
-                                       <span class="course-icon">
-                                          <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                             <path d="M19 0.25H4C3.00544 0.25 2.05161 0.645088 1.34835 1.34835C0.645088 2.05161 0.25 3.00544 0.25 4V19C0.25 19.9946 0.645088 20.9484 1.34835 21.6517C2.05161 22.3549 3.00544 22.75 4 22.75H19C19.9946 22.75 20.9484 22.3549 21.6517 21.6517C22.3549 20.9484 22.75 19.9946 22.75 19V4C22.75 3.00544 22.3549 2.05161 21.6517 1.34835C20.9484 0.645088 19.9946 0.25 19 0.25ZM16.875 8.5125L11.1625 16.0125C11.0461 16.1638 10.8965 16.2864 10.7253 16.3709C10.5542 16.4554 10.3659 16.4995 10.175 16.5C9.98513 16.501 9.79753 16.4588 9.62643 16.3765C9.45532 16.2942 9.30522 16.174 9.1875 16.025L6.1375 12.1375C6.03655 12.0078 5.96212 11.8595 5.91848 11.7011C5.87484 11.5426 5.86283 11.3772 5.88314 11.2141C5.90346 11.051 5.95569 10.8935 6.03687 10.7506C6.11804 10.6077 6.22657 10.4822 6.35625 10.3812C6.61815 10.1774 6.95032 10.0859 7.27968 10.1269C7.44276 10.1472 7.60025 10.1994 7.74314 10.2806C7.88604 10.3618 8.01155 10.4703 8.1125 10.6L10.15 13.2L14.875 6.95C14.9751 6.81868 15.1002 6.70836 15.2429 6.62536C15.3857 6.54235 15.5434 6.48828 15.7071 6.46622C15.8707 6.44417 16.0371 6.45457 16.1968 6.49682C16.3564 6.53908 16.5062 6.61237 16.6375 6.7125C16.7688 6.81263 16.8791 6.93765 16.9621 7.08042C17.0451 7.22318 17.0992 7.3809 17.1213 7.54456C17.1433 7.70823 17.1329 7.87463 17.0907 8.03427C17.0484 8.19392 16.9751 8.34368 16.875 8.475V8.5125Z" fill="var(--secondary)"/>
-                                          </svg>
-                                       </span>
-                                       <div class="ms-2">
-                                          <h4 class="mb-0">0</h4>
-                                          <span>Completed Courses</span>
-                                       </div>
-                                    </div>
-                                    <img src="images/vector/check.png" alt="">
-                                 </div>
-                              </div>
-                              <div class="col-xl-4 col-sm-6">
-                                 <div class="dlab-cource">
-                                    <div class="d-flex align-items-center">
-                                       <span class="course-icon">
-                                          <svg width="23" height="23" viewBox="0 0 21 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                             <path d="M14.3201 4.65852H2.86175C2.35544 4.6591 1.87003 4.8592 1.51201 5.21494C1.15399 5.57068 0.952605 6.053 0.952026 6.55609V24.5829C0.952032 24.7573 1.00037 24.9282 1.09175 25.077C1.18312 25.2259 1.31399 25.3468 1.47 25.4266C1.626 25.5063 1.80111 25.5418 1.97609 25.5292C2.15108 25.5166 2.31918 25.4563 2.46195 25.355L8.5901 21.005L14.72 25.355C14.8628 25.4563 15.0309 25.5166 15.2058 25.5292C15.3808 25.5418 15.5559 25.5063 15.7119 25.4265C15.8679 25.3468 15.9988 25.2258 16.0901 25.077C16.1815 24.9282 16.2298 24.7572 16.2298 24.5829V6.55609C16.2292 6.053 16.0278 5.57068 15.6698 5.21494C15.3118 4.8592 14.8264 4.6591 14.3201 4.65852V4.65852Z" fill="#21262E"/>
-                                             <path d="M18.1395 0.863403H5.72635C5.4731 0.863403 5.23023 0.963364 5.05116 1.14129C4.87209 1.31923 4.77148 1.56055 4.77148 1.81218C4.77148 2.06382 4.87209 2.30514 5.05116 2.48307C5.23023 2.661 5.4731 2.76096 5.72635 2.76096H18.1395V20.7878C18.1395 21.0394 18.2401 21.2808 18.4192 21.4587C18.5983 21.6366 18.8412 21.7366 19.0944 21.7366C19.3476 21.7366 19.5905 21.6366 19.7696 21.4587C19.9487 21.2808 20.0493 21.0394 20.0493 20.7878V2.76096C20.0487 2.25788 19.8473 1.77556 19.4893 1.41982C19.1313 1.06408 18.6459 0.863979 18.1395 0.863403V0.863403Z" fill="#21262E"/>
-                                          </svg>
-                                       </span>
-                                       <div class="ms-2">
-                                          <h4 class="mb-0">4</h4>
-                                          <span>Enrolled Courses</span>
-                                       </div>
-                                    </div>
-                                    <img src="images/vector/bookmarks.png" class="bookmarks" alt="">
-                                 </div>
-                              </div>
-                              <div class="col-xl-4 col-sm-12">
-                                 <div class="dlab-cource bg-primary">
-                                    <div class="d-flex align-items-center">
-                                       <span class="course-icon">
-                                          <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                             <path d="M13.4999 7.13426C12.1639 7.13426 10.8617 7.55464 9.7778 8.33585C8.69393 9.11705 7.88334 10.2195 7.46084 11.487C7.03834 12.7545 7.02536 14.1228 7.42373 15.3981C7.82209 16.6733 8.61162 17.791 9.68047 18.5926V23.6852C9.68047 24.3605 9.94874 25.0082 10.4263 25.4857C10.9038 25.9632 11.5514 26.2315 12.2268 26.2315H14.7731C15.4484 26.2315 16.096 25.9632 16.5736 25.4857C17.0511 25.0082 17.3194 24.3605 17.3194 23.6852V18.5926C18.3882 17.791 19.1777 16.6733 19.5761 15.3981C19.9745 14.1228 19.9615 12.7545 19.539 11.487C19.1165 10.2195 18.3059 9.11705 17.222 8.33585C16.1382 7.55464 14.836 7.13426 13.4999 7.13426ZM13.4999 5.86111C13.8376 5.86111 14.1614 5.72698 14.4002 5.48822C14.6389 5.24946 14.7731 4.92563 14.7731 4.58797V2.04167C14.7731 1.70401 14.6389 1.38018 14.4002 1.14142C14.1614 0.902659 13.8376 0.768524 13.4999 0.768524C13.1622 0.768524 12.8384 0.902659 12.5997 1.14142C12.3609 1.38018 12.2268 1.70401 12.2268 2.04167V4.58797C12.2268 4.92563 12.3609 5.24946 12.5997 5.48822C12.8384 5.72698 13.1622 5.86111 13.4999 5.86111ZM24.9582 12.2269H22.4119C22.0743 12.2269 21.7505 12.361 21.5117 12.5998C21.2729 12.8385 21.1388 13.1623 21.1388 13.5C21.1388 13.8377 21.2729 14.1615 21.5117 14.4003C21.7505 14.639 22.0743 14.7731 22.4119 14.7731H24.9582C25.2959 14.7731 25.6197 14.639 25.8585 14.4003C26.0973 14.1615 26.2314 13.8377 26.2314 13.5C26.2314 13.1623 26.0973 12.8385 25.8585 12.5998C25.6197 12.361 25.2959 12.2269 24.9582 12.2269ZM4.58788 12.2269H2.04158C1.70392 12.2269 1.38009 12.361 1.14133 12.5998C0.902567 12.8385 0.768433 13.1623 0.768433 13.5C0.768433 13.8377 0.902567 14.1615 1.14133 14.4003C1.38009 14.639 1.70392 14.7731 2.04158 14.7731H4.58788C4.92554 14.7731 5.24937 14.639 5.48813 14.4003C5.72689 14.1615 5.86102 13.8377 5.86102 13.5C5.86102 13.1623 5.72689 12.8385 5.48813 12.5998C5.24937 12.361 4.92554 12.2269 4.58788 12.2269ZM7.97445 6.39584L6.14112 4.58797C5.89294 4.35329 5.5617 4.22682 5.22027 4.23637C4.87884 4.24592 4.55519 4.39071 4.32051 4.63889C4.08584 4.88707 3.95937 5.21831 3.96892 5.55974C3.97847 5.90117 4.12326 6.22482 4.37144 6.45949L6.20477 8.22917C6.3278 8.34797 6.47351 8.44076 6.63319 8.50201C6.79287 8.56325 6.96325 8.5917 7.13417 8.58565C7.30567 8.585 7.47527 8.5497 7.63279 8.48188C7.79031 8.41406 7.9325 8.31511 8.05084 8.19098C8.2781 7.94248 8.39765 7.61407 8.38334 7.27763C8.36902 6.94119 8.222 6.62413 7.97445 6.39584ZM22.6538 4.65162C22.4153 4.4145 22.0926 4.2814 21.7563 4.2814C21.4199 4.2814 21.0972 4.4145 20.8587 4.65162L19.0254 6.39584C18.7882 6.63438 18.6551 6.95706 18.6551 7.29341C18.6551 7.62975 18.7882 7.95244 19.0254 8.19098C19.1437 8.31511 19.2859 8.41406 19.4434 8.48188C19.6009 8.5497 19.7705 8.585 19.942 8.58565C20.2698 8.58435 20.5845 8.45666 20.8205 8.22917L22.6538 6.45949C22.7732 6.34114 22.8679 6.20033 22.9325 6.04518C22.9972 5.89004 23.0304 5.72363 23.0304 5.55556C23.0304 5.38749 22.9972 5.22108 22.9325 5.06594C22.8679 4.91079 22.7732 4.76998 22.6538 4.65162Z" fill="var(--primary)"/>
-                                          </svg>
-                                       </span>
-                                       <div class="ms-2">
-                                          <h4 class="mb-0">132</h4>
-                                          <span>Total Learning Hours</span>
-                                       </div>
-                                    </div>
-                                    <img src="images/vector/bulb.png" class="bulb" alt="">
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
-                        <div class="col-xl-12 col-xxl-6">
-                           <div class="card score-active">
-                              <div class="card-header border-0 flex-wrap">
-                                 <h4>Learning Activity</h4>
-                                 <ul class="d-flex">
-                                    <li>
-                                       <svg class="me-2" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                          <rect x="1.5" y="1.5" width="9" height="9" rx="4.5" fill="white" stroke="var(--primary)" stroke-width="3"/>
-                                       </svg>
-                                       Last Month
-                                    </li>
-                                    <li>
-                                       <svg class="me-2" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                          <rect x="1.5" y="1.5" width="9" height="9" rx="4.5" fill="white" stroke="var(--secondary)" stroke-width="3"/>
-                                       </svg>
-                                       Last Month
-                                    </li>
-                                 </ul>
-                              </div>
-                              <div class="card-body pb-1 custome-tooltip style-1 py-0 ">
-                                 <div id="activity"></div>
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-                  <div class="col-xl-6 col-xxl-12">
-                     <div class="row">
-                        <div class="col-xl-12">
-
-                        </div>
-                        <div class="col-xl-4 col-lg-6">
-                           <div class="card">
-                              <div class="card-body pt-3">
-                                  <div id="newProgressChart"></div>
-                                  <div class="redial-content">
-                                      <h4>Progress</h4>
-                                      <p id="progressText"></p>
-                                      <a href="/submissions" class="btn btn-primary">My Submissions</a>
-                                      <br>
-                                      <br>
-                                  </div>
-                              </div>
-                          </div>
-                        </div>
-                        <div class="col-xl-8 col-lg-6">
-                           <div class="card">
-                              <div class="card-body card-calendar">
-                                 <input type='text' class="form-control d-none" id='datetimepicker' />
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-            </div>
-         </div>
-         <!--**********************************
-            Content body end
-            ***********************************-->
-         <!--**********************************
-            Footer start
-            ***********************************-->
-         <div class="footer">
-            <div class="copyright">
-               <p>Copyright © KJ Somaiya College Of Engineering</p>
-            </div>
-         </div>
-         <!--**********************************
-            Footer end
-            ***********************************-->
-      </div>
+    <div class="content-body">
+        <div class="container-fluid">
+                    <div class="container">
+                            <main>
+                                <section id="currentSemester">
+                                    <h2>Current Semester</h2>
+                                    <div id="currentSemesterGrid" class="submissions-grid"></div>
+                                </section>
+                                <section id="previousSemesters">
+                                    <h2>Previous Semesters</h2>
+                                    <div id="previousSemestersGrid" class="submissions-grid"></div>
+                                </section>
+                            </main>
+                    </div>
+        </div>
+    </div>
+    <!-- Submission Modal -->
+    <div id="submissionModal" class="modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <h2>Submit Your Work</h2>
+            <form id="submissionForm">
+                <input type="hidden" id="courseId">
+                <div class="form-group">
+                    <input type="url" id="submissionLink" placeholder="Enter submission link" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="closeModal" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="loader" class="loader">
+        <div class="spinner"></div>
+    </div>
+    <div class="footer">
+        <div class="copyright">
+           <p>Copyright © KJ Somaiya College Of Engineering</p>
+        </div>
+     </div>
+</div>         
       <!--**********************************
          Main wrapper end
          ***********************************-->
@@ -371,39 +219,26 @@
       <script src="./vendor/apexchart/apexchart.js"></script>
       <script src="./vendor/global/dashboard.js"></script>
       <script src="./js/dashboard/dashboard-1.js"></script>
+      <script src="./vendor/global/submissions.handler.js"></script>
       <script src="./js/custom.js"></script>
       <script src="./js/dlabnav-init.js"></script>
       <script src="./js/styleSwitcher.js"></script>
       <script>
-         $(function () {
-         	$('#datetimepicker').datetimepicker({
-         		inline: true,
-         	});
-         });
-         
-         $(document).ready(function(){
-         	$(".booking-calender .fa.fa-clock-o").removeClass(this);
-         	$(".booking-calender .fa.fa-clock-o").addClass('fa-clock');
-         });
-         
-         
+        // Add this script to dynamically set the user's profile picture
+           document.addEventListener('DOMContentLoaded', function () {
+               // Fetch user data from the server
+               fetch('/user')
+                   .then(response => response.json())
+                    .then(data => {
+                        var profilePicture = document.getElementById('profilePicture');
+                                 
+                         if (profilePicture) {
+                       // Update the profile picture in the UI
+                           profilePicture.src = data.user ? data.user.profile_picture : 'images/profile/default-profile.jpg';
+                        }
+                   })
+                    .catch(error => console.error('Error fetching user data:', error));
+            });
       </script>
-      <script>
-         // Add this script to dynamically set the user's profile picture
-            document.addEventListener('DOMContentLoaded', function () {
-                // Fetch user data from the server
-                fetch('/user')
-                    .then(response => response.json())
-                     .then(data => {
-                         var profilePicture = document.getElementById('profilePicture');
-                                  
-                          if (profilePicture) {
-                        // Update the profile picture in the UI
-                            profilePicture.src = data.user ? data.user.profile_picture : 'images/profile/default-profile.jpg';
-                         }
-                    })
-                     .catch(error => console.error('Error fetching user data:', error));
-             });
-      </script>
-   </body>
+</body>
 </html>
