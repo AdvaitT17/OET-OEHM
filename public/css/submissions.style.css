@@ -124,6 +124,30 @@ select:focus {
 .submission-card.oehm::before {
     background-color: var(--oehm-color);
 }
+.submission-card.unapproved {
+    opacity: 0.7;
+    background-color: #f0f0f0;
+}
+
+.submission-card.unapproved::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 24px;
+    color: rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+}
+
+.disabled-link {
+    pointer-events: none;
+    color: #999;
+    text-decoration: none;
+}
+
+.status-pending-approval {
+    color: #f0ad4e;
+}
 
 .card-header {
     padding: 1.5rem;

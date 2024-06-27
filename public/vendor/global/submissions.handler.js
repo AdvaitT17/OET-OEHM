@@ -1,8 +1,13 @@
 let submissions = [];
-let currentSemester;
+let userCurrentSemester;
 
 document.addEventListener('DOMContentLoaded', function() {
-    fetchSubmissions();
+    fetchUserData()
+        .then(() => fetchSubmissions())
+        .catch(error => {
+            console.error('Error initializing page:', error);
+            showError('Failed to initialize page. Please try again later.');
+        });
 
     document.getElementById('currentSemesterGrid').addEventListener('click', handleSubmissionClick);
     document.getElementById('previousSemestersGrid').addEventListener('click', handleSubmissionClick);
@@ -16,6 +21,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function fetchUserData() {
+    return fetch('/user')
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            userCurrentSemester = data.user.semester;
+        })
+        .catch(error => {
+            console.error('Error fetching user data:', error);
+            showError('Failed to load user data. Please try again later.');
+        });
+}
+
 function fetchSubmissions() {
     showLoader();
     fetch('/api/submissions')
@@ -25,7 +45,6 @@ function fetchSubmissions() {
         })
         .then(data => {
             submissions = data;
-            currentSemester = determineCurrentSemester(submissions);
             populateSubmissionsGrids(submissions);
             hideLoader();
         })
@@ -37,21 +56,25 @@ function fetchSubmissions() {
 }
 
 function populateSubmissionsGrids(submissions) {
-    const currentSemesterSubmissions = submissions.filter(s => s.enrolled_semester === currentSemester);
-    const previousSemesterSubmissions = submissions.filter(s => s.enrolled_semester < currentSemester);
+    const currentSemesterSubmissions = submissions.filter(s => s.enrolled_semester === userCurrentSemester);
+    const previousSemesterSubmissions = submissions.filter(s => s.enrolled_semester < userCurrentSemester);
 
-    populateGrid('currentSemesterGrid', currentSemesterSubmissions);
-    populateGrid('previousSemestersGrid', previousSemesterSubmissions);
+    if (currentSemesterSubmissions.length === 0) {
+        document.getElementById('currentSemesterGrid').innerHTML = '<p class="no-submissions">No courses opted for this semester yet.</p>';
+    } else {
+        populateGrid('currentSemesterGrid', currentSemesterSubmissions);
+    }
+
+    if (previousSemesterSubmissions.length === 0) {
+        document.getElementById('previousSemestersGrid').innerHTML = '<p class="no-submissions">No submissions from previous semesters.</p>';
+    } else {
+        populateGrid('previousSemestersGrid', previousSemesterSubmissions);
+    }
 }
 
 function populateGrid(gridId, submissions) {
     const grid = document.getElementById(gridId);
     grid.innerHTML = '';
-
-    if (submissions.length === 0) {
-        grid.innerHTML = '<p class="no-submissions">No submissions found</p>';
-        return;
-    }
 
     submissions.forEach((submission, index) => {
         const card = createSubmissionCard(submission);
@@ -65,11 +88,6 @@ function populateGrid(gridId, submissions) {
             card.style.transform = 'translateY(0)';
         }, index * 50);
     });
-}
-
-function determineCurrentSemester(submissions) {
-    const semesters = submissions.map(s => s.enrolled_semester);
-    return semesters.reduce((max, current) => (current > max ? current : max), semesters[0]);
 }
 
 function createSubmissionCard(submission) {
@@ -235,6 +253,3 @@ function showNotification(message, type) {
         }, 3000);
     }, 100);
 }
-
-// Initialize the page
-fetchSubmissions();
