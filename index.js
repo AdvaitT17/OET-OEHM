@@ -94,7 +94,7 @@ const isAuthenticated = (req, res, next) => {
   }
 };
 
-// Modify the isAuthenticatedAndOnboarded middleware
+// isAuthenticatedAndOnboarded middleware
 const isAuthenticatedAndOnboarded = (req, res, next) => {
   if (req.isAuthenticated()) {
     const userEmail = req.user.email;
@@ -102,7 +102,7 @@ const isAuthenticatedAndOnboarded = (req, res, next) => {
       .then(([userRows]) => {
         const user = userRows[0];
         if (user && user.onboarded === 0) {
-          res.redirect('/onboarding.html');
+          res.redirect('/onboarding');
         } else if (user && user.onboarded === 1) {
           next();
         } else {
@@ -117,11 +117,6 @@ const isAuthenticatedAndOnboarded = (req, res, next) => {
     res.redirect('/login.html');
   }
 };
-
-// Route to serve onboarding.html
-app.get('/onboarding.html', isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/onboarding.html'));
-});
 
 // User service or utility function
 const getUserData = async (req) => {
@@ -182,7 +177,7 @@ async function updateAcademicYear(userEmail, semester) {
   }
 }
 
-// Add this new route to check the onboarding step
+// Route to check the onboarding step
 app.get('/checkOnboardingStep', isAuthenticated, async (req, res) => {
   try {
       const [rows] = await pool.query('SELECT onboarding_step FROM users WHERE email = ?', [req.user.email]);
@@ -279,25 +274,6 @@ app.get('/checkAttendance', isAuthenticated, async (req, res) => {
   }
 });
 
-// Route to fetch offline course data from the database
-app.get('/api/courses_offline', async (req, res) => {
-  try {
-    const [rows] = await pool.query(`
-      SELECT 
-        course_code, 
-        course_name, 
-        faculty_name, 
-        semester, 
-        faculty_email, 
-        course_type 
-      FROM courses_offline;
-    `);
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching offline courses:', error);
-    res.status(500).json({ error: 'Internal Server Error', details: error.toString() });
-  }
-});
 
 // Endpoint to handle course enrollment
 app.post('/api/enroll', isAuthenticated, async (req, res) => {
@@ -446,9 +422,86 @@ app.get('/api/progress', isAuthenticated, async (req, res) => {
   }
 });
 
-// Route to serve successful-onboarding.html
-app.get('/successful-onboarding', isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/successful-onboarding.html'));
+app.get('/api/submissions', isAuthenticated, async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+      // First, update course_completed status
+      await connection.query(`
+          UPDATE enrollments e
+          JOIN submissions s ON e.email = s.email AND e.course_id = s.course_id
+          SET e.course_completed = 1
+          WHERE s.submission_status = 'Accepted' AND e.course_completed = 0
+      `);
+
+      // Then fetch the submissions
+      const [rows] = await connection.query(`
+          SELECT 
+              e.course_id, 
+              c.course_name, 
+              e.type,
+              e.enrolled_semester,
+              e.course_completed,
+              COALESCE(s.submission_link, 'Not submitted') as submission_link,
+              COALESCE(s.submission_status, 'Not submitted') as submission_status
+          FROM enrollments e
+          JOIN courses_online c ON e.course_id = c.course_id
+          LEFT JOIN submissions s ON e.email = s.email AND e.course_id = s.course_id
+          WHERE e.email = ? 
+            AND e.mode = 'ONLINE'
+          ORDER BY e.enrolled_semester DESC, c.course_name
+      `, [req.user.email]);
+
+      res.json(rows);
+  } catch (error) {
+      console.error('Error fetching submissions:', error);
+      res.status(500).json({ error: 'Internal Server Error', details: error.toString() });
+  } finally {
+      connection.release();
+  }
+});
+
+app.post('/api/submit', isAuthenticated, async (req, res) => {
+  console.log('Submission received:', req.body);
+  const { courseId, submissionLink } = req.body;
+  const connection = await pool.getConnection();
+  
+  try {
+      await connection.beginTransaction();
+
+      const [existingSubmission] = await connection.query(
+          'SELECT * FROM submissions WHERE email = ? AND course_id = ?',
+          [req.user.email, courseId]
+      );
+
+      if (existingSubmission.length > 0) {
+          // Update existing submission
+          await connection.query(`
+              UPDATE submissions
+              SET submission_link = ?, submission_status = 'Pending'
+              WHERE email = ? AND course_id = ?
+          `, [submissionLink, req.user.email, courseId]);
+          
+          console.log('Submission updated');
+          res.json({ success: true, message: 'Submission updated successfully' });
+      } else {
+          // Insert new submission
+          await connection.query(`
+              INSERT INTO submissions (email, course_id, submission_link, submission_status)
+              VALUES (?, ?, ?, 'Pending')
+          `, [req.user.email, courseId, submissionLink]);
+          
+          console.log('New submission added');
+          res.json({ success: true, message: 'Submission successful' });
+      }
+
+      await connection.commit();
+  } catch (error) {
+      await connection.rollback();
+      console.error('Error submitting:', error);
+      res.status(500).json({ success: false, message: 'Internal Server Error', details: error.toString() });
+  } finally {
+      connection.release();
+  }
 });
 
 // Logout route
@@ -461,12 +514,32 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
-  (req, res) => res.redirect(req.user.onboarded ? '/index.html' : '/onboarding.html')
+  (req, res) => res.redirect(req.user.onboarded ? '/index.html' : '/onboarding')
 );
+
+// Route to serve onboarding.html
+app.get('/onboarding', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/onboarding.html'));
+});
 
 // Route to serve index.html
 app.get(['/', '/index.html'], isAuthenticatedAndOnboarded, (req, res) => {
   res.sendFile(path.join(__dirname, '/public/index.html'));
+});
+
+// Route to serve submissions.html
+app.get(['/submissions', '/submissions.html'], isAuthenticatedAndOnboarded, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/submissions.html'));
+});
+
+// Route to serve profile.html
+app.get(['/profile', '/profile.html'], isAuthenticatedAndOnboarded, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/profile.html'));
+});
+
+// Route to serve successful-onboarding
+app.get(['/successful-onboarding', '/successful-onboarding.html'], isAuthenticatedAndOnboarded, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/successful-onboarding.html'));
 });
 
 // Serve static files from the public directory

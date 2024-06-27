@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             // Update progress text
-            document.getElementById('progressText').textContent = `${data.completed} out of ${data.total} online courses completed (${data.percentage}%)`;
+            document.getElementById('progressText').textContent = `${data.completed} out of ${data.total} online courses completed`;
             
             // Update the progress chart
             updateProgressChart(data.percentage);
