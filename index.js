@@ -6,20 +6,34 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mysql = require('mysql2/promise');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
+const cron = require('node-cron');
 
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT;
 
 const dbConfig = {
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  host: process.env.DB_HOST_LOCAL,
   user: process.env.DB_USER,
-  password: process.env.DB_PASS,
+  password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  connectTimeout: 60000, // 60 seconds
 };
 
 const pool = mysql.createPool({ ...dbConfig });
+
+// Periodic database ping
+const pingDatabase = async () => {
+  try {
+    await pool.query('SELECT 1');
+    console.log('Database pinged successfully');
+  } catch (error) {
+    console.error('Error pinging database:', error);
+  }
+};
+
+// Schedule the pingDatabase function to run every minute
+cron.schedule('* * * * *', pingDatabase);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
@@ -154,29 +168,6 @@ app.get('/user', isAuthenticated, async (req, res) => {
   }
 });
 
-// Function to update academic year in the Users table
-async function updateAcademicYear(userEmail, semester) {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-
-  let academicYear;
-  if (currentMonth < 6) {  // Before July
-    academicYear = `${currentYear - 1}-${currentYear}`;
-  } else {  // July onwards
-    academicYear = `${currentYear}-${currentYear + 1}`;
-  }
-
-  try {
-    const query = `UPDATE users SET academic_year = ? WHERE email = ?`;
-    await pool.query(query, [academicYear, userEmail]);
-    console.log('Academic year updated successfully');
-  } catch (error) {
-    console.error('Error updating academic year:', error);
-    throw error;
-  }
-}
-
 // Route to check the onboarding step
 app.get('/checkOnboardingStep', isAuthenticated, async (req, res) => {
   try {
@@ -218,40 +209,28 @@ app.post('/updateUserData', isAuthenticated, [
   }
 });
 
-async function isValidEnumValue(tableName, fieldName, value) {
-  try {
-    const query = `
-      SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_NAME = ? AND COLUMN_NAME = ?;
-    `;
-    const [rows] = await pool.query(query, [tableName, fieldName]);
-
-    if (!rows || rows.length === 0 || !rows[0].COLUMN_TYPE) {
-      console.error('No COLUMN_TYPE found for the specified field.');
-      return false;
-    }
-
-    const enumValues = rows[0].COLUMN_TYPE.match(/'([^']+)'/g).map(enumValue => enumValue.replace(/'/g, ''));
-    return enumValues.includes(value);
-  } catch (error) {
-    console.error('Error checking enum value:', error);
-    return false;
-  }
-}
 
 // Route to fetch online course data from the database
-app.get('/api/courses', async (req, res) => {
+app.get('/api/courses', isAuthenticated, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM courses_online;');
-    res.json(rows);
+    const [courses] = await pool.query(`
+      SELECT c.*, 
+             CASE WHEN e.course_id IS NOT NULL THEN TRUE ELSE FALSE END AS previously_taken
+      FROM courses_online c
+      LEFT JOIN enrollments e ON c.course_id = e.course_id 
+                              AND e.email = ? 
+                              AND e.enrolled_semester < ?
+    `, [req.user.email, req.user.semester]);
+    
+    res.json(courses);
   } catch (error) {
-    console.error('Error fetching online courses:', error);
+    console.error('Error fetching courses:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 // Route to fetch offline course data from the database
-app.get('/api/courses_offline', async (req, res) => {
+app.get('/api/courses_offline', isAuthenticated, async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM courses_offline;');
     res.json(rows);
@@ -303,9 +282,6 @@ app.post('/api/enroll', isAuthenticated, async (req, res) => {
       if (!course.enrolled_semester) {
         return res.status(400).json({ success: false, message: 'Enrolled semester is missing' });
       }
-      if (!course.enrolled_academic_year) {
-        return res.status(400).json({ success: false, message: 'Enrolled academic year is missing' });
-      }
 
       // Validate mode
       if (course.mode !== 'ONLINE' && course.mode !== 'OFFLINE') {
@@ -328,10 +304,14 @@ app.post('/api/enroll', isAuthenticated, async (req, res) => {
     await connection.beginTransaction();
 
     try {
+      // Fetch the academic_year from the users table
+      const [userRows] = await connection.query('SELECT academic_year FROM users WHERE email = ?', [req.user.email]);
+      const academicYear = userRows[0].academic_year;
+
       for (const course of courses) {
         await connection.query(
           'INSERT INTO enrollments (email, course_id, total_hours, mode, type, enrolled_semester, enrolled_academic_year) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [course.email, course.course_id, course.total_hours, course.mode, course.type, course.enrolled_semester, course.enrolled_academic_year]
+          [course.email, course.course_id, course.total_hours, course.mode, course.type, course.enrolled_semester, academicYear]
         );
       }
 
@@ -363,19 +343,6 @@ app.get('/api/completed-courses', isAuthenticated, async (req, res) => {
     res.json({ count: rows[0].count });
   } catch (error) {
     console.error('Error fetching completed courses:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-app.get('/api/previously-taken-courses', isAuthenticated, async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      'SELECT course_id FROM enrollments WHERE email = ? AND enrolled_semester < ?',
-      [req.user.email, req.user.semester]
-    );
-    res.json(rows.map(row => row.course_id));
-  } catch (error) {
-    console.error('Error fetching previously taken courses:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

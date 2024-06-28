@@ -11,17 +11,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   let selectedCourses = [];
   let userSemester = '';
   let userEmail = '';
-  let previouslyTakenCourses = [];
-
-  async function fetchPreviouslyTakenCourses() {
-    try {
-      const response = await fetch('/api/previously-taken-courses');
-      if (!response.ok) throw new Error('Failed to fetch previously taken courses');
-      previouslyTakenCourses = await response.json();
-    } catch (error) {
-      console.error('Error fetching previously taken courses:', error);
-    }
-  }
 
   async function initializeUserData() {
     try {
@@ -115,10 +104,10 @@ document.addEventListener('DOMContentLoaded', async function() {
       { data: "language", title: "Language" },
       { data: "hours", title: "Hours" },
       { 
-        data: null, 
+        data: "previously_taken",
         title: "Status",
         render: function(data, type, row) {
-          return row.disabled ? 'Previously Taken' : 'Available';
+          return data ? 'Previously Taken' : 'Available';
         }
       }
     ] : [
@@ -128,19 +117,16 @@ document.addEventListener('DOMContentLoaded', async function() {
       { data: "semester", title: "Semester" },
       { data: "faculty_email", title: "Faculty Email" },
       { 
-        data: null, 
+        data: "previously_taken",
         title: "Status",
         render: function(data, type, row) {
-          return row.disabled ? 'Previously Taken' : 'Available';
+          return data ? 'Previously Taken' : 'Available';
         }
       }
     ];
   
     const dataTable = $table.DataTable({
-      data: courses.map(course => ({
-        ...course,
-        disabled: previouslyTakenCourses.includes(course.course_id || course.course_code)
-      })),
+      data: courses,
       columns: columns,
       responsive: true,
       scrollX: false,
@@ -154,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
       },
       createdRow: function(row, data, dataIndex) {
-        if (data.disabled) {
+        if (data.previously_taken) {
           $(row).addClass('disabled');
         }
       }
@@ -162,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   
     $table.off('click', 'tbody tr').on('click', 'tbody tr', function() {
       const data = dataTable.row(this).data();
-      if (data.disabled) return; // Prevent selection of disabled rows
+      if (data.previously_taken) return; // Prevent selection of previously taken courses
   
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');
@@ -322,18 +308,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     summaryContainer.appendChild(buttonContainer);
 }
-
-  function getCurrentAcademicYear() {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth();
-    
-    if (currentMonth < 6) {
-      return `${currentYear - 1}-${currentYear}`;
-    } else {
-      return `${currentYear}-${currentYear + 1}`;
-    }
-  }
 
   async function updateUserData(data) {
     try {
@@ -512,7 +486,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       mode: course.mode.toUpperCase(),
       type: course.type,
       enrolled_semester: userSemester,
-      enrolled_academic_year: getCurrentAcademicYear()
+      enrolled_academic_year: null // This will be set on the server side
     }));
 
     console.log('Enrollment data:', JSON.stringify(enrollmentData, null, 2));
@@ -559,7 +533,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
   // Initialize user data and set up tables
-  await fetchPreviouslyTakenCourses();
   await initializeUserData();
   await setupTable("#OETCoursesTable");
   if (userSemester !== 'VII') {
