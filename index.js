@@ -92,7 +92,7 @@ passport.deserializeUser(async (email, done) => {
 // Global error handling middleware
 app.use((err, req, res, next) => {
   if (err.code === 'ETIMEDOUT') {
-    res.redirect('/login.html');
+    res.redirect('/login');
   } else {
     console.error('Unhandled error:', err);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -104,7 +104,7 @@ const isAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
   } else {
-    res.redirect('/login.html');
+    res.redirect('/login');
   }
 };
 
@@ -120,15 +120,15 @@ const isAuthenticatedAndOnboarded = (req, res, next) => {
         } else if (user && user.onboarded === 1) {
           next();
         } else {
-          res.redirect('/login.html');
+          res.redirect('/login');
         }
       })
       .catch(error => {
         console.error('Error checking user onboarding status:', error);
-        res.redirect('/login.html');
+        res.redirect('/login');
       });
   } else {
-    res.redirect('/login.html');
+    res.redirect('/login');
   }
 };
 
@@ -361,11 +361,11 @@ app.get('/api/enrolled-courses', isAuthenticated, async (req, res) => {
   }
 });
 
-// Route to get total learning hours for current semester
+// Route to get total learning hours
 app.get('/api/total-learning-hours', isAuthenticated, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT SUM(e.total_hours) as total FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ? AND e.enrolled_semester = u.semester',
+      'SELECT SUM(e.total_hours) as total FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ?',
       [req.user.email]
     );
     res.json({ total: rows[0].total || 0 });
@@ -486,7 +486,7 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
 
 // Logout route
 app.get('/logout', (req, res) => {
-  req.logout((err) => err ? res.send('Error logging out') : res.redirect('/login.html'));
+  req.logout((err) => err ? res.send('Error logging out') : res.redirect('/login'));
 });
 
 // Google authentication routes
@@ -494,11 +494,16 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
-  (req, res) => res.redirect(req.user.onboarded ? '/index.html' : '/onboarding')
+  (req, res) => res.redirect(req.user.onboarded ? '/' : '/onboarding')
 );
 
-// Route to serve onboarding.html
-app.get(['/onboarding', '/onboarding.html'], isAuthenticated, async (req, res) => {
+// Route to serve login route
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/login.html'));
+});
+
+// Route to serve onboarding
+app.get('/onboarding', isAuthenticated, async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT onboarded FROM users WHERE email = ?', [req.user.email]);
     if (rows.length > 0 && rows[0].onboarded === 1) {
@@ -511,27 +516,38 @@ app.get(['/onboarding', '/onboarding.html'], isAuthenticated, async (req, res) =
   }
 });
 
-// Route to serve index.html
-app.get(['/', '/index.html'], isAuthenticatedAndOnboarded, (req, res) => {
+// Route to serve dashboard
+app.get('/', isAuthenticatedAndOnboarded, (req, res) => {
   res.sendFile(path.join(__dirname, '/public/index.html'));
 });
 
-// Route to serve submissions.html
-app.get(['/submissions', '/submissions.html'], isAuthenticatedAndOnboarded, (req, res) => {
+// Route to serve submissions
+app.get('/submissions', isAuthenticatedAndOnboarded, (req, res) => {
   res.sendFile(path.join(__dirname, '/public/submissions.html'));
 });
 
-// Route to serve profile.html
-app.get(['/profile', '/profile.html'], isAuthenticatedAndOnboarded, (req, res) => {
+// Route to serve profile
+app.get('/profile', isAuthenticatedAndOnboarded, (req, res) => {
   res.sendFile(path.join(__dirname, '/public/profile.html'));
 });
 
 // Route to serve successful-onboarding
-app.get(['/successful-onboarding', '/successful-onboarding.html'], isAuthenticatedAndOnboarded, (req, res) => {
+app.get('/successful-onboarding', isAuthenticatedAndOnboarded, (req, res) => {
   res.sendFile(path.join(__dirname, '/public/successful-onboarding.html'));
+});
+
+// Redirect .html to ./
+app.get('/:page.html', (req, res, next) => {
+  const page = req.params.page;
+  res.redirect(`/${page}`);
 });
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Route to handle 404 errors
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, '/public/404.html'));
+});
 
 app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`)); 
