@@ -253,6 +253,38 @@ app.get('/checkAttendance', isAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/api/enrollments', isAuthenticated, async (req, res) => {
+  try {
+    const userEmail = req.user.email;
+
+    const query = `
+      SELECT 
+        e.course_id,
+        COALESCE(co.course_name, cf.course_name) AS course_name,
+        e.type,
+        e.mode,
+        e.enrolled_semester,
+        e.course_completed
+      FROM 
+        enrollments e
+      LEFT JOIN 
+        courses_online co ON e.course_id = co.course_id AND e.mode = 'Online'
+      LEFT JOIN 
+        courses_offline cf ON e.course_id = cf.course_code AND e.mode = 'Offline'
+      WHERE 
+        e.email = ?
+      ORDER BY 
+        e.enrolled_semester DESC, course_name ASC
+    `;
+
+    const [rows] = await pool.query(query, [userEmail]);
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching enrollments:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Endpoint to handle course enrollment
 app.post('/api/enroll', isAuthenticated, async (req, res) => {
