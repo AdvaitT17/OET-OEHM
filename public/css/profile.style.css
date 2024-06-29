@@ -89,8 +89,10 @@
     --background-color: #f0f4f8;
     --card-background: #ffffff;
     --text-color: #333333;
-    --oet-color: #ed1c25;
-    --oehm-color: #b7202e;
+    --oet-online-color: #ed1c25;
+    --oet-offline-color: #b7202e;
+    --oehm-online-color: #ed1c25;
+    --oehm-offline-color: #b7202e;
     --completed-color: #2ecc71;
     --not-completed-color: #e74c3c;
 }
@@ -178,18 +180,60 @@
 }
 
 .card-header {
-    padding: 1.5rem;
-    color: white;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
+  padding: 1rem;
+  color: white;
+  font-weight: 600;
 }
 
-.card-header.oet { background-color: var(--oet-color); }
-.card-header.oehm { background-color: var(--oehm-color); }
+.course-name-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: nowrap;
+}
+
+.course-name {
+  flex: 1;
+  margin-right: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.course-type-badge {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+/* Tooltip styles */
+.course-name {
+  position: relative;
+  cursor: pointer;
+}
+
+.course-name:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  z-index: 1;
+  white-space: normal;
+  max-width: 300px;
+  word-wrap: break-word;
+}
+
+.card-header.oet.online { background-color: var(--oet-online-color); }
+.card-header.oet.offline { background-color: var(--oet-offline-color); }
+.card-header.oehm.online { background-color: var(--oehm-online-color); }
+.card-header.oehm.offline { background-color: var(--oehm-offline-color); }
 
 .course-type {
     font-size: 0.8rem;
