@@ -1,11 +1,9 @@
 document.addEventListener('DOMContentLoaded', async function() {
-  console.log("DOM fully loaded and parsed");
 
   if (typeof $.fn.DataTable === 'undefined') {
     console.error('DataTables is not loaded. Please check if the library is properly included.');
     return;
   }
-  console.log('DataTables version:', $.fn.DataTable.version);
 
   let attendanceVerified = false;
   let selectedCourses = [];
@@ -16,7 +14,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
       const response = await fetch('/user');
       const userData = await response.json();
-      console.log('User data:', userData);
       if (userData.user) {
         document.getElementById('name').value = userData.user.name || '';
         document.getElementById('email').value = userData.user.email || '';
@@ -29,7 +26,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         handleSemesterVII(userSemester);
       }
       attendanceVerified = await checkAttendanceVerified();
-      console.log('Attendance verified:', attendanceVerified);
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
@@ -346,11 +342,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         semester: document.getElementById('semesterSelect').value
     };
 
-    console.log('Attempting to update user data:', userData);
-
     try {
         const result = await updateUserData(userData);
-        console.log('Update user data result:', result);
         if (result.success) {
             userSemester = userData.semester;
             handleSemesterVII(userSemester);
@@ -403,8 +396,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
   function enrollCourses() {
-    console.log('Enrollment process started');
-    console.log('Selected courses:', JSON.stringify(selectedCourses, null, 2));
 
     if (selectedCourses.length === 0) {
       alert('Please select at least one course to enroll.');
@@ -489,8 +480,6 @@ document.addEventListener('DOMContentLoaded', async function() {
       enrolled_academic_year: null // This will be set on the server side
     }));
 
-    console.log('Enrollment data:', JSON.stringify(enrollmentData, null, 2));
-
     fetch('/api/enroll', {
       method: 'POST',
       headers: {
@@ -523,7 +512,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     return fetch('/checkAttendance')
       .then(response => response.json())
       .then(data => {
-        console.log('Attendance verification response:', data);
         return data.attendanceVerified;
       })
       .catch(error => {
@@ -555,6 +543,4 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
     }
   });
-
-  console.log("Onboarding script completed");
 });
