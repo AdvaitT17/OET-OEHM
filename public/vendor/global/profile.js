@@ -9,51 +9,62 @@ document.addEventListener('DOMContentLoaded', function () {
         })
          .catch(error => console.error('Error fetching user data:', error));
  });
-let userDetails = {};
-let totalLearningHours = 0;
-let courses = [];
 
-document.addEventListener('DOMContentLoaded', function() {
-    fetchUserData()
-        .then(() => fetchTotalLearningHours())
-        .then(() => fetchCourses())
-        .then(() => updateStats())
-        .catch(error => {
-            console.error('Error initializing page:', error);
-        });
-});
-
-function fetchUserData() {
-    return fetch('/user')
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return response.json();
-        })
-        .then(data => {
-            userDetails = data.user;
-            updateUserDetailsDisplay();
-        })
-        .catch(error => {
-            console.error('Error fetching user data:', error);
-        });
-}
-
-function fetchTotalLearningHours() {
-    return fetch('/api/total-learning-hours')
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return response.json();
-        })
-        .then(data => {
-            totalLearningHours = data.total || 0;
-        })
-        .catch(error => {
-            console.error('Error fetching total learning hours:', error);
-        });
-}
-
-function fetchCourses() {
-    return fetch('/api/submissions')
+ let userDetails = {};
+ let totalLearningHours = 0;
+ let courses = [];
+ 
+ document.addEventListener('DOMContentLoaded', function() {
+     fetchUserData()
+         .then(() => fetchTotalLearningHours())
+         .then(() => fetchEnrollments())
+         .then(() => updateStats())
+         .catch(error => {
+             console.error('Error initializing page:', error);
+         });
+ });
+ 
+ function fetchUserData() {
+     return fetch('/user')
+         .then(response => {
+             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+             return response.json();
+         })
+         .then(data => {
+             userDetails = data.user;
+             updateUserDetailsDisplay();
+         })
+         .catch(error => {
+             console.error('Error fetching user data:', error);
+         });
+ }
+ 
+ function updateUserDetailsDisplay() {
+     const nameElement = document.getElementById('userName');
+     const emailElement = document.getElementById('userEmail');
+     const detailsElement = document.getElementById('userDetails');
+ 
+     if (nameElement) nameElement.textContent = userDetails.name || 'User Name';
+     if (emailElement) emailElement.textContent = userDetails.email || 'Email';
+     if (detailsElement) detailsElement.textContent = `Semester ${userDetails.semester || 'N/A'}`;
+ }
+ 
+ function fetchTotalLearningHours() {
+     return fetch('/api/total-learning-hours')
+         .then(response => {
+             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+             return response.json();
+         })
+         .then(data => {
+             totalLearningHours = data.total || 0;
+         })
+         .catch(error => {
+             console.error('Error fetching total learning hours:', error);
+         });
+ }
+ 
+ function fetchEnrollments() {
+    return fetch('/api/enrollments')
         .then(response => {
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return response.json();
@@ -63,24 +74,14 @@ function fetchCourses() {
             populateCoursesGrids(courses);
         })
         .catch(error => {
-            console.error('Error fetching courses:', error);
+            console.error('Error fetching enrollments:', error);
             document.getElementById('currentSemesterGrid').innerHTML = '<p>Error loading courses. Please try again later.</p>';
             document.getElementById('previousSemesterGrid').innerHTML = '<p>Error loading courses. Please try again later.</p>';
         });
 }
 
-function updateUserDetailsDisplay() {
-    const nameElement = document.getElementById('userName');
-    const emailElement = document.getElementById('userEmail');
-    const detailsElement = document.getElementById('userDetails');
-
-    if (nameElement) nameElement.textContent = userDetails.name || 'User Name';
-    if (emailElement) emailElement.textContent = userDetails.email || 'Email';
-    if (detailsElement) detailsElement.textContent = `Semester ${userDetails.semester || 'N/A'}`;
-}
-
 function populateCoursesGrids(courses) {
-    const currentSemesterCourses = courses.filter(c => c.enrolled_semester === userDetails.semester);
+    const currentSemesterCourses = courses.filter(c => c.enrolled_semester == userDetails.semester);
     const previousSemesterCourses = courses.filter(c => c.enrolled_semester < userDetails.semester);
 
     populateGrid('currentSemesterGrid', currentSemesterCourses);
@@ -102,10 +103,21 @@ function populateGrid(gridId, courses) {
 function createCourseCard(course) {
     const card = document.createElement('div');
     card.className = 'course-card';
+    
+    const capitalizedMode = course.mode.charAt(0).toUpperCase() + course.mode.slice(1);
+    
+    // Truncate course name if it's too long
+    const maxLength = 50; 
+    const truncatedName = course.course_name.length > maxLength 
+        ? course.course_name.substring(0, maxLength) + '...' 
+        : course.course_name;
+    
     card.innerHTML = `
-        <div class="card-header ${course.type.toLowerCase()}">
-            <span>${course.course_name}</span>
-            <span class="course-type">${course.type}</span>
+        <div class="card-header ${course.type.toLowerCase()} ${course.mode.toLowerCase()}">
+            <div class="course-name-container">
+                <span class="course-name" title="${course.course_name}">${truncatedName}</span>
+                <span class="course-type-badge">${course.type} - ${capitalizedMode}</span>
+            </div>
         </div>
         <div class="card-body">
             <div class="card-info">
