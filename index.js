@@ -6,11 +6,13 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const mysql = require('mysql2/promise');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
-const cron = require('node-cron');
+const crypto = require('crypto');
 
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT;
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'password';
+
 
 const dbConfig = {
   host: process.env.DB_HOST_LOCAL,
@@ -22,23 +24,12 @@ const dbConfig = {
 
 const pool = mysql.createPool({ ...dbConfig });
 
-// Periodic database ping
-const pingDatabase = async () => {
-  try {
-    await pool.query('SELECT 1');
-    console.log('Database pinged successfully');
-  } catch (error) {
-    console.error('Error pinging database:', error);
-  }
-};
-
-// Schedule the pingDatabase function to run every minute
-cron.schedule('* * * * *', pingDatabase);
-
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+const reonboardingFlags = new Map();
 
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
@@ -108,27 +99,178 @@ const isAuthenticated = (req, res, next) => {
   }
 };
 
-// isAuthenticatedAndOnboarded middleware
-const isAuthenticatedAndOnboarded = (req, res, next) => {
-  if (req.isAuthenticated()) {
+const forceRedirect = (req, res, next) => {
+  res.redirect = function(url) {
+    console.log(`[forceRedirect] Redirecting to: ${url}`);
+    res.writeHead(302, { Location: url });
+    res.end();
+  };
+  next();
+};
+
+// Add this middleware before your routes
+app.use(forceRedirect);
+
+// checkUserStatus middleware
+const checkUserStatus = async (req, res, next) => {
+  console.log('[checkUserStatus] Starting status check');
+  
+  if (!req.isAuthenticated()) {
+    console.log('[checkUserStatus] User not authenticated, redirecting to login');
+    return res.redirect('/login');
+  }
+
+  try {
     const userEmail = req.user.email;
-    pool.query('SELECT * FROM users WHERE email = ?', [userEmail])
-      .then(([userRows]) => {
-        const user = userRows[0];
-        if (user && user.onboarded === 0) {
-          res.redirect('/onboarding');
-        } else if (user && user.onboarded === 1) {
-          next();
-        } else {
-          res.redirect('/login');
-        }
-      })
-      .catch(error => {
-        console.error('Error checking user onboarding status:', error);
-        res.redirect('/login');
-      });
-  } else {
-    res.redirect('/login');
+    console.log(`[checkUserStatus] Checking status for user: ${userEmail}`);
+
+    // Check if re-onboarding is needed
+    if (reonboardingFlags.get(userEmail)) {
+      console.log(`[checkUserStatus] Re-onboarding needed for user: ${userEmail}`);
+      return res.redirect('/onboarding');
+    }
+
+    // Fetch user data
+    const [userRows] = await pool.query('SELECT semester FROM users WHERE email = ?', [userEmail]);
+    const user = userRows[0];
+
+    if (!user) {
+      console.log('[checkUserStatus] User not found in database');
+      return res.redirect('/login');
+    }
+
+    console.log(`[checkUserStatus] User Semester: ${user.semester}`);
+
+    // Check enrollments
+    const [enrollmentRows] = await pool.query(`
+      SELECT COUNT(*) as total_count, 
+             SUM(CASE WHEN course_approved = 1 THEN 1 ELSE 0 END) as approved_count
+      FROM enrollments 
+      WHERE email = ? AND enrolled_semester = ?
+    `, [userEmail, user.semester]);
+
+    const { total_count, approved_count } = enrollmentRows[0];
+    console.log(`[checkUserStatus] Enrollments - Total: ${total_count}, Approved: ${approved_count}`);
+
+    if (total_count === 0) {
+      console.log('[checkUserStatus] No enrollments found, redirecting to onboarding');
+      return res.redirect('/onboarding');
+    }
+
+    if (total_count > approved_count) {
+      console.log('[checkUserStatus] Pending approvals, redirecting to successful-onboarding');
+      return res.redirect('/successful-onboarding');
+    }
+
+    console.log('[checkUserStatus] All checks passed, proceeding to next middleware');
+    next();
+  } catch (error) {
+    console.error('[checkUserStatus] Error:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+};
+
+// Webhook endpoint to trigger re-onboarding
+app.post('/webhook/trigger-reonboarding', async (req, res) => {
+  const signature = req.headers['x-webhook-signature'];
+  const payload = JSON.stringify(req.body);
+
+  // Verify webhook signature
+  const expectedSignature = crypto
+    .createHmac('sha256', WEBHOOK_SECRET)
+    .update(payload)
+    .digest('hex');
+
+  if (signature !== expectedSignature) {
+    console.log('Invalid signature received');
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  const { userEmail } = req.body;
+
+  try {
+    // Start a transaction
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      // Get the user's current semester
+      const [userRows] = await connection.query('SELECT semester FROM users WHERE email = ?', [userEmail]);
+      
+      if (userRows.length === 0) {
+        throw new Error('User not found');
+      }
+      
+      const currentSemester = userRows[0].semester;
+
+      // Clear existing enrollments for the current semester only
+      await connection.query(
+        'DELETE FROM enrollments WHERE email = ? AND enrolled_semester = ?', 
+        [userEmail, currentSemester]
+      );
+      console.log(`Cleared existing enrollments for user: ${userEmail} in semester: ${currentSemester}`);
+
+      // Set the re-onboarding flag
+      reonboardingFlags.set(userEmail, true);
+      console.log(`Re-onboarding flag set for user: ${userEmail}`);
+
+      // Commit the transaction
+      await connection.commit();
+
+      res.json({ success: true, message: 'Re-onboarding triggered successfully and current semester enrollments cleared' });
+    } catch (error) {
+      // If there's an error, rollback the changes
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error in re-onboarding process:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
+// For testing purposes
+app.get('/check-flag/:email', (req, res) => {
+  const email = req.params.email;
+  const flagSet = reonboardingFlags.get(email) || false;
+  console.log(`Checking flag for ${email}. Flag status: ${flagSet}`);
+  console.log('Current reonboardingFlags:', Array.from(reonboardingFlags.entries()));
+  res.json({ flagSet, sessionFlag: req.session.needsReonboarding || false });
+});
+
+// Updated checkSuccessfulOnboarding middleware
+const checkSuccessfulOnboarding = async (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect('/login');
+  }
+
+  try {
+    const [userRows] = await pool.query('SELECT semester FROM users WHERE email = ?', [req.user.email]);
+    const user = userRows[0];
+
+    const [enrollmentRows] = await pool.query(`
+      SELECT COUNT(*) as total_count, 
+             SUM(CASE WHEN course_approved = 1 THEN 1 ELSE 0 END) as approved_count
+      FROM enrollments 
+      WHERE email = ? AND enrolled_semester = ?
+    `, [req.user.email, user.semester]);
+
+    const { total_count, approved_count } = enrollmentRows[0];
+
+    if (total_count === 0) {
+      return res.redirect('/onboarding');
+    }
+
+    if (parseInt(total_count) === parseInt(approved_count)) {
+      return res.redirect('/');
+    }
+
+    next();
+  } catch (error) {
+    console.error('[checkSuccessfulOnboarding] Error:', error);
+    res.status(500).send('Internal Server Error');
   }
 };
 
@@ -145,8 +287,7 @@ const getUserData = async (req) => {
     name: user.name,
     email: user.email,
     profile_picture: user.profile_picture,
-    semester: user.semester,
-    onboarded: user.onboarded,
+    semester: user.semester
   };
 
   return sanitizedUser;
@@ -183,6 +324,7 @@ app.get('/checkOnboardingStep', isAuthenticated, async (req, res) => {
   }
 });
 
+// Update user data route with semester change handling
 app.post('/updateUserData', isAuthenticated, [
   body('roll_number').isString().notEmpty(),
   body('branch').isIn(['IT', 'COMPS', 'EXTC']),
@@ -190,25 +332,31 @@ app.post('/updateUserData', isAuthenticated, [
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
+    return res.status(400).json({ success: false, errors: errors.array() });
   }
 
   const { roll_number, branch, semester } = req.body;
   const userEmail = req.user.email;
 
   try {
-      await pool.query(
-          'UPDATE users SET roll_number = ?, branch = ?, semester = ?, onboarding_step = 2 WHERE email = ?',
-          [roll_number, branch, semester, userEmail]
-      );
+    const [currentUserData] = await pool.query('SELECT semester FROM users WHERE email = ?', [userEmail]);
+    const currentSemester = currentUserData[0].semester;
 
-      res.json({ success: true, message: 'User data updated successfully' });
+    await pool.query(
+      'UPDATE users SET roll_number = ?, branch = ?, semester = ?, onboarding_step = 2 WHERE email = ?',
+      [roll_number, branch, semester, userEmail]
+    );
+
+    if (currentSemester !== semester) {
+      req.session.needsOnboarding = true;
+    }
+
+    res.json({ success: true, message: 'User data updated successfully', needsOnboarding: req.session.needsOnboarding });
   } catch (error) {
-      console.error('Error updating user data:', error);
-      res.status(500).json({ success: false, message: 'Failed to update user data' });
+    console.error('Error updating user data:', error);
+    res.status(500).json({ success: false, message: 'Failed to update user data' });
   }
 });
-
 
 // Route to fetch online course data from the database
 app.get('/api/courses', isAuthenticated, async (req, res) => {
@@ -288,9 +436,11 @@ app.get('/api/enrollments', isAuthenticated, async (req, res) => {
 
 // Endpoint to handle course enrollment
 app.post('/api/enroll', isAuthenticated, async (req, res) => {
-  console.log('Enrollment request received:', req.body);
 
   try {
+    // After successful enrollment
+    reonboardingFlags.delete(req.user.email);
+    console.log(`Re-onboarding flag cleared for user: ${req.user.email}`);
     const { courses } = req.body;
     
     if (!Array.isArray(courses) || courses.length === 0) {
@@ -342,13 +492,10 @@ app.post('/api/enroll', isAuthenticated, async (req, res) => {
 
       for (const course of courses) {
         await connection.query(
-          'INSERT INTO enrollments (email, course_id, total_hours, mode, type, enrolled_semester, enrolled_academic_year) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO enrollments (email, course_id, total_hours, mode, type, enrolled_semester, enrolled_academic_year, course_approved) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
           [course.email, course.course_id, course.total_hours, course.mode, course.type, course.enrolled_semester, academicYear]
         );
       }
-
-      // Set onboarded to 1
-      await connection.query('UPDATE users SET onboarded = 1 WHERE email = ?', [req.user.email]);
 
       await connection.commit();
       res.json({ success: true, message: 'Enrollment successful' });
@@ -437,43 +584,33 @@ app.get('/api/progress', isAuthenticated, async (req, res) => {
 app.get('/api/submissions', isAuthenticated, async (req, res) => {
   const connection = await pool.getConnection();
   try {
-      // First, update course_completed status
-      await connection.query(`
-          UPDATE enrollments e
-          JOIN submissions s ON e.email = s.email AND e.course_id = s.course_id
-          SET e.course_completed = 1
-          WHERE s.submission_status = 'Accepted' AND e.course_completed = 0
-      `);
+    const [rows] = await connection.query(`
+      SELECT 
+        e.course_id, 
+        c.course_name, 
+        e.type,
+        e.enrolled_semester,
+        e.course_completed,
+        COALESCE(s.submission_link, 'Not submitted') as submission_link,
+        COALESCE(s.submission_status, 'Not submitted') as submission_status
+      FROM enrollments e
+      JOIN courses_online c ON e.course_id = c.course_id
+      LEFT JOIN submissions s ON e.email = s.email AND e.course_id = s.course_id
+      WHERE e.email = ? 
+        AND e.mode = 'ONLINE'
+      ORDER BY e.enrolled_semester DESC, c.course_name
+    `, [req.user.email]);
 
-      // Then fetch the submissions
-      const [rows] = await connection.query(`
-          SELECT 
-              e.course_id, 
-              c.course_name, 
-              e.type,
-              e.enrolled_semester,
-              e.course_completed,
-              COALESCE(s.submission_link, 'Not submitted') as submission_link,
-              COALESCE(s.submission_status, 'Not submitted') as submission_status
-          FROM enrollments e
-          JOIN courses_online c ON e.course_id = c.course_id
-          LEFT JOIN submissions s ON e.email = s.email AND e.course_id = s.course_id
-          WHERE e.email = ? 
-            AND e.mode = 'ONLINE'
-          ORDER BY e.enrolled_semester DESC, c.course_name
-      `, [req.user.email]);
-
-      res.json(rows);
+    res.json(rows);
   } catch (error) {
-      console.error('Error fetching submissions:', error);
-      res.status(500).json({ error: 'Internal Server Error', details: error.toString() });
+    console.error('Error fetching submissions:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.toString() });
   } finally {
-      connection.release();
+    connection.release();
   }
 });
 
 app.post('/api/submit', isAuthenticated, async (req, res) => {
-  console.log('Submission received:', req.body);
   const { courseId, submissionLink } = req.body;
   const connection = await pool.getConnection();
   
@@ -493,7 +630,6 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
               WHERE email = ? AND course_id = ?
           `, [submissionLink, req.user.email, courseId]);
           
-          console.log('Submission updated');
           res.json({ success: true, message: 'Submission updated successfully' });
       } else {
           // Insert new submission
@@ -502,7 +638,6 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
               VALUES (?, ?, ?, 'Pending')
           `, [req.user.email, courseId, submissionLink]);
           
-          console.log('New submission added');
           res.json({ success: true, message: 'Submission successful' });
       }
 
@@ -525,8 +660,11 @@ app.get('/logout', (req, res) => {
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/' }),
-  (req, res) => res.redirect(req.user.onboarded ? '/' : '/onboarding')
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  checkUserStatus,
+  (req, res) => {
+    res.redirect('/');
+  }
 );
 
 // Route to serve login route
@@ -534,38 +672,73 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '/public/login.html'));
 });
 
-// Route to serve onboarding
+app.get('/', checkUserStatus, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/index.html'));
+});
+
+app.get('/submissions', checkUserStatus, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/submissions.html'));
+});
+
+app.get('/profile', checkUserStatus, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/profile.html'));
+});
+
+app.get('/successful-onboarding', checkSuccessfulOnboarding, (req, res) => {
+  res.sendFile(path.join(__dirname, '/public/successful-onboarding.html'));
+});
+
+// Updated onboarding route
 app.get('/onboarding', isAuthenticated, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT onboarded FROM users WHERE email = ?', [req.user.email]);
-    if (rows.length > 0 && rows[0].onboarded === 1) {
-      return res.redirect('/'); // Redirect to dashboard if already onboarded
+    const userEmail = req.user.email;
+    console.log(`[Onboarding] Accessed by user: ${userEmail}`);
+
+    if (reonboardingFlags.get(userEmail)) {
+      console.log(`[Onboarding] User ${userEmail} needs re-onboarding`);
+      return res.sendFile(path.join(__dirname, '/public/onboarding.html'));
     }
-    res.sendFile(path.join(__dirname, '/public/onboarding.html'));
+
+    // Check for existing enrollments
+    const [enrollmentRows] = await pool.query(`
+      SELECT COUNT(*) as count 
+      FROM enrollments 
+      WHERE email = ? AND enrolled_semester = ?
+    `, [req.user.email, req.user.semester]);
+
+    if (enrollmentRows[0].count === 0) {
+      console.log('[Onboarding] No enrollments found, showing onboarding page');
+      return res.sendFile(path.join(__dirname, '/public/onboarding.html'));
+    }
+
+    // Check for pending approvals
+    const [approvalRows] = await pool.query(`
+      SELECT COUNT(*) as total_count, 
+             SUM(CASE WHEN course_approved = 1 THEN 1 ELSE 0 END) as approved_count
+      FROM enrollments 
+      WHERE email = ? AND enrolled_semester = ?
+    `, [req.user.email, req.user.semester]);
+
+    const { total_count, approved_count } = approvalRows[0];
+    console.log(`[Onboarding] Enrollments - Total: ${total_count}, Approved: ${approved_count}`);
+
+    if (total_count > approved_count) {
+      console.log('[Onboarding] Pending approvals, redirecting to successful-onboarding');
+      return res.redirect('/successful-onboarding');
+    } else {
+      console.log('[Onboarding] All enrollments approved, redirecting to home');
+      return res.redirect('/');
+    }
   } catch (error) {
-    console.error('Error checking onboarding status:', error);
+    console.error('[Onboarding] Error:', error);
     res.status(500).send('Internal Server Error');
   }
 });
 
-// Route to serve dashboard
-app.get('/', isAuthenticatedAndOnboarded, (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/index.html'));
-});
-
-// Route to serve submissions
-app.get('/submissions', isAuthenticatedAndOnboarded, (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/submissions.html'));
-});
-
-// Route to serve profile
-app.get('/profile', isAuthenticatedAndOnboarded, (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/profile.html'));
-});
-
-// Route to serve successful-onboarding
-app.get('/successful-onboarding', isAuthenticatedAndOnboarded, (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/successful-onboarding.html'));
+// For testing: endpoint to check re-onboarding status
+app.get('/check-reonboarding/:email', (req, res) => {
+  const needsReonboarding = reonboardingFlags.get(req.params.email) || false;
+  res.json({ needsReonboarding });
 });
 
 // Redirect .html to ./
