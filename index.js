@@ -101,15 +101,15 @@ passport.deserializeUser(async (email, done) => {
   }
 });
 
-// Global error handling middleware
-app.use((err, req, res, next) => {
-  if (err.code === "ETIMEDOUT") {
-    res.redirect("/login");
-  } else {
-    console.error("Unhandled error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+const forceRedirect = (req, res, next) => {
+  res.redirect = function (url) {
+    res.writeHead(302, { Location: url });
+    res.end();
+  };
+  next();
+};
+
+app.use(forceRedirect);
 
 // Custom middleware for authentication
 const isAuthenticated = (req, res, next) => {
@@ -119,17 +119,6 @@ const isAuthenticated = (req, res, next) => {
     res.redirect("/login");
   }
 };
-
-const forceRedirect = (req, res, next) => {
-  res.redirect = function (url) {
-    res.writeHead(302, { Location: url });
-    res.end();
-  };
-  next();
-};
-
-// Add this middleware before your routes
-app.use(forceRedirect);
 
 // checkUserStatus middleware
 const checkUserStatus = async (req, res, next) => {
@@ -249,14 +238,6 @@ app.post("/webhook/trigger-reonboarding", async (req, res) => {
       .status(500)
       .json({ error: "Internal server error", details: error.message });
   }
-});
-
-// For testing purposes
-app.get("/check-flag/:email", (req, res) => {
-  const email = req.params.email;
-  const flagSet = reonboardingFlags.get(email) || false;
-
-  res.json({ flagSet, sessionFlag: req.session.needsReonboarding || false });
 });
 
 // Updated checkSuccessfulOnboarding middleware
@@ -838,12 +819,6 @@ app.get("/onboarding", isAuthenticated, async (req, res) => {
     console.error("[Onboarding] Error:", error);
     res.status(500).send("Internal Server Error");
   }
-});
-
-// For testing: endpoint to check re-onboarding status
-app.get("/check-reonboarding/:email", (req, res) => {
-  const needsReonboarding = reonboardingFlags.get(req.params.email) || false;
-  res.json({ needsReonboarding });
 });
 
 // Redirect .html to ./
