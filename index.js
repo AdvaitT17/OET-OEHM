@@ -619,15 +619,15 @@ app.get("/api/total-learning-hours", isAuthenticated, async (req, res) => {
   }
 });
 
-// Route to get progress for current semester (online courses only)
+// Route to get progress for all the semesters (both online & offline courses)
 app.get("/api/progress", isAuthenticated, async (req, res) => {
   try {
     const [totalRows] = await pool.query(
-      'SELECT COUNT(*) as total FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ? AND e.enrolled_semester = u.semester AND e.mode = "ONLINE"',
+      "SELECT COUNT(*) as total FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ?",
       [req.user.email]
     );
     const [completedRows] = await pool.query(
-      'SELECT COUNT(*) as completed FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ? AND e.enrolled_semester = u.semester AND e.mode = "ONLINE" AND e.course_completed = 1',
+      "SELECT COUNT(*) as completed FROM enrollments e JOIN users u ON e.email = u.email WHERE e.email = ? AND e.course_completed = 1",
       [req.user.email]
     );
 

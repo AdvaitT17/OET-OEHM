@@ -49104,3 +49104,15 @@ html[dir="rtl"]
 [data-theme-version="dark"] .footer .copyright p {
   color: #fff;
 }
+
+/* Default style for larger screens */
+.logo-path {
+  fill: #ffff;
+}
+
+/* Media query for mobile screens */
+@media screen and (max-width: 768px) {
+  .logo-path {
+    fill: #b7202e; /* Change to red on mobile */
+  }
+}
