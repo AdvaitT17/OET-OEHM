@@ -49105,6 +49105,9 @@ html[dir="rtl"]
   color: #fff;
 }
 
+.ellipse svg {
+    pointer-events: none;
+}
 /* Default style for larger screens */
 .logo-path {
   fill: #ffff;
