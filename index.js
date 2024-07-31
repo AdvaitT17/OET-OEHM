@@ -468,7 +468,6 @@ app.get("/api/enrollments", isAuthenticated, async (req, res) => {
 // Endpoint to handle course enrollment
 app.post("/api/enroll", isAuthenticated, async (req, res) => {
   try {
-    // After successful enrollment
     reonboardingFlags.delete(req.user.email);
     const { courses } = req.body;
 

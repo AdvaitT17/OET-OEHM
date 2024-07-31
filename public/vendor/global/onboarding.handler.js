@@ -8,6 +8,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   let attendanceVerified = false;
   let selectedCourses = [];
+  let selectedOfflineOETCourses = [];
+  let selectedOfflineOEHMCourses = [];
+  let availableOfflineOETCourses = [];
+  let availableOfflineOEHMCourses = [];
   let userSemester = "";
   let userEmail = "";
 
@@ -99,7 +103,21 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return await response.json();
+      const courses = await response.json();
+
+      // Store offline courses for the current semester
+      if (!isOnline) {
+        availableOfflineOETCourses = courses.filter(
+          (course) =>
+            course.course_type === "OET" && course.semester === userSemester
+        );
+        availableOfflineOEHMCourses = courses.filter(
+          (course) =>
+            course.course_type === "OEHM" && course.semester === userSemester
+        );
+      }
+
+      return courses;
     } catch (error) {
       console.error("Error fetching courses:", error);
       return [];
@@ -136,6 +154,13 @@ document.addEventListener("DOMContentLoaded", async function () {
           { data: "semester", title: "Semester" },
           { data: "faculty_email", title: "Faculty Email" },
           {
+            data: "preference",
+            title: "Preference",
+            render: function (data, type, row) {
+              return data ? data : "Not selected";
+            },
+          },
+          {
             data: "previously_taken",
             title: "Status",
             render: function (data, type, row) {
@@ -171,25 +196,62 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     $table.off("click", "tbody tr").on("click", "tbody tr", function () {
       const data = dataTable.row(this).data();
-      if (data.previously_taken) return; // Prevent selection of previously taken courses
+      if (data.previously_taken) return;
 
-      if ($(this).hasClass("selected")) {
-        $(this).removeClass("selected");
-        selectedCourses = selectedCourses.filter(
-          (course) => course.course_id !== data.course_id
-        );
+      if (isOnline) {
+        if ($(this).hasClass("selected")) {
+          $(this).removeClass("selected");
+          selectedCourses = selectedCourses.filter(
+            (course) => course.course_id !== data.course_id
+          );
+        } else {
+          $(this).addClass("selected");
+          selectedCourses.push({
+            ...data,
+            mode: "online",
+            type: tableId === "#OETCoursesTable" ? "OET" : "OEHM",
+          });
+        }
       } else {
-        $(this).addClass("selected");
-        selectedCourses.push({
-          ...data,
-          mode: isOnline ? "online" : "offline",
-          type: isOnline
-            ? tableId === "#OETCoursesTable"
-              ? "OET"
-              : "OEHM"
-            : data.course_type,
+        const courseArray =
+          data.course_type === "OET"
+            ? selectedOfflineOETCourses
+            : selectedOfflineOEHMCourses;
+        const index = courseArray.findIndex(
+          (course) => course.course_code === data.course_code
+        );
+
+        if (index !== -1) {
+          courseArray.splice(index, 1);
+        } else {
+          courseArray.push({
+            ...data,
+            preference: courseArray.length + 1,
+            mode: "offline",
+            type: data.course_type,
+          });
+        }
+
+        courseArray.forEach((course, index) => {
+          course.preference = index + 1;
         });
+
+        dataTable
+          .clear()
+          .rows.add(
+            courses.map((course) => {
+              const selected = courseArray.find(
+                (c) => c.course_code === course.course_code
+              );
+              return {
+                ...course,
+                preference: selected ? selected.preference : null,
+              };
+            })
+          )
+          .draw();
       }
+
       displaySelectedCoursesSummary();
     });
 
@@ -256,7 +318,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     );
     summaryContainer.innerHTML = "";
 
-    if (selectedCourses.length === 0) {
+    if (
+      selectedCourses.length === 0 &&
+      selectedOfflineOETCourses.length === 0 &&
+      selectedOfflineOEHMCourses.length === 0
+    ) {
       summaryContainer.innerHTML =
         '<p class="no-courses-message">No courses selected yet.</p>';
       return;
@@ -270,9 +336,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const courseCardsContainer = document.createElement("div");
     courseCardsContainer.className = "course-cards";
 
-    selectedCourses.forEach((course) => {
+    function createCourseCard(course, isOffline = false) {
       const card = document.createElement("div");
-      card.className = `course-card ${course.mode}`;
+      card.className = `course-card ${isOffline ? "offline" : "online"}`;
 
       const cardHeader = document.createElement("div");
       cardHeader.className = "course-card-header";
@@ -283,31 +349,28 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       const modeBadge = document.createElement("span");
       modeBadge.className = "mode-badge";
-      modeBadge.textContent =
-        course.mode.charAt(0).toUpperCase() + course.mode.slice(1);
+      modeBadge.textContent = isOffline ? `Offline (${course.type})` : "Online";
       cardHeader.appendChild(modeBadge);
 
       const cardBody = document.createElement("div");
       cardBody.className = "course-card-body";
 
-      const infoItems =
-        course.mode === "online"
-          ? [
-              { label: "University", value: course.university },
-              { label: "Domain", value: course.domain },
-              { label: "Type", value: course.type, isType: true },
-              { label: "Hours", value: course.hours || "N/A" },
-              {
-                label: "Peer Graded",
-                value: course.peer_graded ? "Yes" : "No",
-              },
-            ]
-          : [
-              { label: "Faculty", value: course.faculty_name },
-              { label: "Semester", value: course.semester },
-              { label: "Type", value: course.type, isType: true },
-              { label: "Email", value: course.faculty_email },
-            ];
+      const infoItems = isOffline
+        ? [
+            { label: "Course Code", value: course.course_code },
+            { label: "Faculty", value: course.faculty_name },
+            { label: "Semester", value: course.semester },
+            { label: "Type", value: course.type, isType: true },
+            { label: "Email", value: course.faculty_email },
+            { label: "Preference", value: course.preference }, // Added preference here
+          ]
+        : [
+            { label: "University", value: course.university },
+            { label: "Domain", value: course.domain },
+            { label: "Type", value: course.type, isType: true },
+            { label: "Hours", value: course.hours || "N/A" },
+            { label: "Peer Graded", value: course.peer_graded ? "Yes" : "No" },
+          ];
 
       infoItems.forEach((item) => {
         const infoDiv = document.createElement("div");
@@ -333,27 +396,36 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       card.appendChild(cardHeader);
       card.appendChild(cardBody);
-      courseCardsContainer.appendChild(card);
+      return card;
+    }
+
+    selectedCourses.forEach((course) => {
+      courseCardsContainer.appendChild(createCourseCard(course));
+    });
+
+    selectedOfflineOETCourses.forEach((course) => {
+      courseCardsContainer.appendChild(createCourseCard(course, true));
+    });
+
+    selectedOfflineOEHMCourses.forEach((course) => {
+      courseCardsContainer.appendChild(createCourseCard(course, true));
     });
 
     summaryContainer.appendChild(courseCardsContainer);
 
-    // Add button container
     const buttonContainer = document.createElement("div");
     buttonContainer.className = "button-container";
 
-    // Previous button
     const previousButton = document.createElement("button");
     previousButton.className = "form-wizard-button form-wizard-previous-btn";
     previousButton.textContent = "Previous";
     previousButton.addEventListener("click", goToPreviousStep);
     buttonContainer.appendChild(previousButton);
 
-    // Submit button
     const submitButton = document.createElement("button");
     submitButton.className = "form-wizard-button form-wizard-submit";
     submitButton.textContent = "Submit";
-    submitButton.addEventListener("click", submitForm);
+    submitButton.addEventListener("click", enrollCourses);
     buttonContainer.appendChild(submitButton);
 
     summaryContainer.appendChild(buttonContainer);
@@ -465,7 +537,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function enrollCourses() {
-    if (selectedCourses.length === 0) {
+    if (
+      selectedCourses.length === 0 &&
+      selectedOfflineOETCourses.length === 0 &&
+      selectedOfflineOEHMCourses.length === 0
+    ) {
       alert("Please select at least one course to enroll.");
       return;
     }
@@ -473,9 +549,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const onlineCourses = selectedCourses.filter(
       (course) => course.mode === "online"
     );
-    const offlineCourses = selectedCourses.filter(
-      (course) => course.mode === "offline"
-    );
+    const offlineOETCourses = selectedOfflineOETCourses;
+    const offlineOEHMCourses = selectedOfflineOEHMCourses;
 
     const onlineOETCourses = onlineCourses.filter(
       (course) => course.type === "OET"
@@ -483,13 +558,26 @@ document.addEventListener("DOMContentLoaded", async function () {
     const onlineOEHMCourses = onlineCourses.filter(
       (course) => course.type === "OEHM"
     );
-    const offlineOETCourses = offlineCourses.filter(
-      (course) => course.type === "OET"
-    );
-    const offlineOEHMCourses = offlineCourses.filter(
-      (course) => course.type === "OEHM"
-    );
 
+    // Check if all available offline courses for the current semester are selected
+    if (offlineOETCourses.length !== availableOfflineOETCourses.length) {
+      alert(
+        `Please select all available offline OET courses for semester ${userSemester} in order of preference.`
+      );
+      return;
+    }
+
+    if (
+      userSemester !== "VII" &&
+      offlineOEHMCourses.length !== availableOfflineOEHMCourses.length
+    ) {
+      alert(
+        `Please select all available offline OEHM courses for semester ${userSemester} in order of preference.`
+      );
+      return;
+    }
+
+    // Rest of the existing validation logic
     if (userSemester === "VII") {
       if (onlineOETCourses.length === 0 && offlineOETCourses.length === 0) {
         alert("Please select at least one OET course (online or offline).");
@@ -515,20 +603,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             "2. Offline OET and Offline OEHM\n" +
             "3. Online OET and Offline OEHM\n" +
             "4. Offline OET and Online OEHM"
-        );
-        return;
-      }
-    }
-
-    if (offlineCourses.length > 0) {
-      if (
-        offlineOETCourses.length > 1 ||
-        (userSemester !== "VII" && offlineOEHMCourses.length > 1)
-      ) {
-        alert(
-          "For offline courses, you can select at most 1 OET course" +
-            (userSemester !== "VII" ? " and 1 OEHM course" : "") +
-            "."
         );
         return;
       }
@@ -586,15 +660,35 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
     }
 
-    const enrollmentData = selectedCourses.map((course) => ({
-      email: userEmail,
-      course_id: course.course_id || course.course_code,
-      total_hours: course.mode === "online" ? course.hours : null,
-      mode: course.mode.toUpperCase(),
-      type: course.type,
-      enrolled_semester: userSemester,
-      enrolled_academic_year: null, // This will be set on the server side
-    }));
+    const enrollmentData = [
+      ...onlineCourses.map((course) => ({
+        email: userEmail,
+        course_id: course.course_id,
+        total_hours: course.hours,
+        mode: "ONLINE",
+        type: course.type,
+        enrolled_semester: userSemester,
+        enrolled_academic_year: null, // This will be set on the server side
+      })),
+      ...offlineOETCourses.map((course) => ({
+        email: userEmail,
+        course_id: course.course_code,
+        total_hours: null,
+        mode: "OFFLINE",
+        type: "OET",
+        enrolled_semester: userSemester,
+        enrolled_academic_year: null, // This will be set on the server side
+      })),
+      ...offlineOEHMCourses.map((course) => ({
+        email: userEmail,
+        course_id: course.course_code,
+        total_hours: null,
+        mode: "OFFLINE",
+        type: "OEHM",
+        enrolled_semester: userSemester,
+        enrolled_academic_year: null, // This will be set on the server side
+      })),
+    ];
 
     fetch("/api/enroll", {
       method: "POST",
