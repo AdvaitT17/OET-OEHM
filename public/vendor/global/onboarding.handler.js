@@ -14,6 +14,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   let availableOfflineOEHMCourses = [];
   let userSemester = "";
   let userEmail = "";
+  let isOETOnline = false;
+  let isOEHMOnline = false;
 
   function validateAcknowledgeCheckbox() {
     const acknowledgeCheckbox = document.getElementById("acknowledge");
@@ -286,6 +288,30 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       toggle.addEventListener("change", async function () {
         isOnline = this.checked;
+        if (tableId === "#OETCoursesTable") {
+          isOETOnline = isOnline;
+          selectedOfflineOETCourses = []; // Clear offline OET selections when toggling to online
+        } else {
+          isOEHMOnline = isOnline;
+          selectedOfflineOEHMCourses = []; // Clear offline OEHM selections when toggling to online
+        }
+
+        if (isOnline) {
+          // Clear offline selections for this table
+          if (tableId === "#OETCoursesTable") {
+            selectedOfflineOETCourses = [];
+          } else {
+            selectedOfflineOEHMCourses = [];
+          }
+        } else {
+          // Clear online selections for this table
+          selectedCourses = selectedCourses.filter(
+            (course) =>
+              (tableId === "#OETCoursesTable" && course.type !== "OET") ||
+              (tableId === "#OEHMCoursesTable" && course.type !== "OEHM")
+          );
+        }
+
         courses = await fetchCourses(isOnline);
 
         if (!isOnline) {
@@ -349,7 +375,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       const modeBadge = document.createElement("span");
       modeBadge.className = "mode-badge";
-      modeBadge.textContent = isOffline ? `Offline (${course.type})` : "Online";
+      modeBadge.textContent = isOffline ? `Offline` : "Online";
       cardHeader.appendChild(modeBadge);
 
       const cardBody = document.createElement("div");
@@ -559,8 +585,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       (course) => course.type === "OEHM"
     );
 
-    // Check if all available offline courses for the current semester are selected
-    if (offlineOETCourses.length !== availableOfflineOETCourses.length) {
+    // Check if all available offline courses for the current semester are selected, only if offline mode is selected
+    if (
+      !isOETOnline &&
+      offlineOETCourses.length > 0 &&
+      offlineOETCourses.length !== availableOfflineOETCourses.length
+    ) {
       alert(
         `Please select all available offline OET courses for semester ${userSemester} in order of preference.`
       );
@@ -569,6 +599,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (
       userSemester !== "VII" &&
+      !isOEHMOnline &&
+      offlineOEHMCourses.length > 0 &&
       offlineOEHMCourses.length !== availableOfflineOEHMCourses.length
     ) {
       alert(
