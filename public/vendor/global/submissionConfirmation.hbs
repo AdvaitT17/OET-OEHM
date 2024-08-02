@@ -1,0 +1,59 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Submission Confirmation | KJSCE OET-OEHM Portal</title>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 20px;
+      } .logo { text-align: left; margin-bottom: 20px; } .logo img { max-width:
+      235px; } h1 { color: #b7202f; } .submission-details { width: 100%;
+      border-collapse: collapse; margin-top: 20px; } .submission-details th,
+      .submission-details td { border: 1px solid #ddd; padding: 10px;
+      text-align: left; } .submission-details th { background-color: #f2f2f2; }
+      .footer { margin-top: 20px; font-size: 0.9em; color: #666; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img
+          src="https://lms-kjsce.somaiya.edu/pluginfile.php/1/theme_essential/logo/1716970170/engg-logo.png"
+          alt="KJ Somaiya College Of Engineering"
+        />
+      </div>
+      <h1>Course Submission Confirmation</h1>
+      <p>Dear {{userName}},</p>
+      <p>We have received your submission for the following course:</p>
+
+      <table class="submission-details">
+        <tr>
+          <th>Course Name</th>
+          <td>{{courseName}}</td>
+        </tr>
+        <tr>
+          <th>Course Type</th>
+          <td>{{courseType}}</td>
+        </tr>
+        <tr>
+          <th>Semester</th>
+          <td>{{semester}}</td>
+        </tr>
+        <tr>
+          <th>Submission Link</th>
+          <td><a href="{{submissionLink}}">{{submissionLink}}</a></td>
+        </tr>
+      </table>
+
+      <p>Your submission has been recorded successfully and is currently pending
+        review. We will notify you once the review process is complete.</p>
+
+      <p>If you have any questions or need to make changes, please contact the
+        academic office.</p>
+
+      <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+      </div>
+    </div>
+  </body>
+</html>

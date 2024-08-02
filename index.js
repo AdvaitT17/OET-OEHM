@@ -7,6 +7,12 @@ const mysql = require("mysql2/promise");
 const path = require("path");
 const { body, validationResult } = require("express-validator");
 const crypto = require("crypto");
+const {
+  sendConfirmationEmail,
+} = require("./public/vendor/global/emailService");
+const {
+  sendSubmissionConfirmationEmail,
+} = require("./public/vendor/global/emailService");
 
 const app = express();
 app.use(express.json());
@@ -467,112 +473,198 @@ app.get("/api/enrollments", isAuthenticated, async (req, res) => {
 
 // Endpoint to handle course enrollment
 app.post("/api/enroll", isAuthenticated, async (req, res) => {
+  const { courses } = req.body;
+  const userEmail = req.user.email;
+
+  if (!Array.isArray(courses) || courses.length === 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid courses data" });
+  }
+
+  const connection = await pool.getConnection();
+
   try {
-    reonboardingFlags.delete(req.user.email);
-    const { courses } = req.body;
-
-    if (!Array.isArray(courses) || courses.length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid courses data" });
-    }
-
-    // Validate the courses data
-    for (const course of courses) {
-      if (!course.email) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Email is missing" });
-      }
-      if (!course.course_id) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Course ID is missing" });
-      }
-      if (!course.mode) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Mode is missing" });
-      }
-      if (!course.type) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Type is missing" });
-      }
-      if (!course.enrolled_semester) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Enrolled semester is missing" });
-      }
-
-      // Validate mode
-      if (course.mode !== "ONLINE" && course.mode !== "OFFLINE") {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid mode value" });
-      }
-
-      // Validate type
-      if (course.type !== "OET" && course.type !== "OEHM") {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid type value" });
-      }
-
-      // Validate total_hours (can be null for offline courses)
-      if (
-        course.mode === "ONLINE" &&
-        (course.total_hours === null || isNaN(course.total_hours))
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid total hours for online course",
-        });
-      }
-    }
-
-    // Insert the courses into the database
-    const connection = await pool.getConnection();
     await connection.beginTransaction();
 
-    try {
-      // Fetch the academic_year from the users table
-      const [userRows] = await connection.query(
-        "SELECT academic_year FROM users WHERE email = ?",
-        [req.user.email]
-      );
-      const academicYear = userRows[0].academic_year;
+    // Fetch user data
+    const [userRows] = await connection.query(
+      "SELECT academic_year, semester, name FROM users WHERE email = ?",
+      [userEmail]
+    );
+    const {
+      academic_year: academicYear,
+      semester: userSemester,
+      name: userName,
+    } = userRows[0];
 
-      for (const course of courses) {
-        await connection.query(
-          "INSERT INTO enrollments (email, course_id, total_hours, mode, type, enrolled_semester, enrolled_academic_year, course_approved) VALUES (?, ?, ?, ?, ?, ?, ?, 0)",
-          [
-            course.email,
-            course.course_id,
-            course.total_hours,
-            course.mode,
-            course.type,
-            course.enrolled_semester,
-            academicYear,
-          ]
+    // Validate and process courses
+    const onlineCourses = courses.filter((course) => course.mode === "ONLINE");
+    const offlineOETCourses = courses.filter(
+      (course) => course.mode === "OFFLINE" && course.type === "OET"
+    );
+    const offlineOEHMCourses = courses.filter(
+      (course) => course.mode === "OFFLINE" && course.type === "OEHM"
+    );
+
+    const onlineOETCourses = onlineCourses.filter(
+      (course) => course.type === "OET"
+    );
+    const onlineOEHMCourses = onlineCourses.filter(
+      (course) => course.type === "OEHM"
+    );
+
+    // Validate online courses
+    if (onlineCourses.length > 0) {
+      const totalOETHours = onlineOETCourses.reduce(
+        (sum, course) => sum + parseInt(course.total_hours || 0),
+        0
+      );
+      const totalOEHMHours = onlineOEHMCourses.reduce(
+        (sum, course) => sum + parseInt(course.total_hours || 0),
+        0
+      );
+
+      if (
+        onlineOETCourses.length > 0 &&
+        (totalOETHours < 30 || totalOETHours > 45)
+      ) {
+        throw new Error(
+          "Total hours for online OET courses must be between 30 and 45."
         );
       }
 
-      await connection.commit();
-      res.json({ success: true, message: "Enrollment successful" });
-    } catch (error) {
-      await connection.rollback();
-      console.error("Database error during enrollment:", error);
-      res.status(500).json({
-        success: false,
-        message: "Enrollment failed due to a database error",
-      });
-    } finally {
-      connection.release();
+      if (
+        userSemester !== "VII" &&
+        onlineOEHMCourses.length > 0 &&
+        (totalOEHMHours < 30 || totalOEHMHours > 45)
+      ) {
+        throw new Error(
+          "Total hours for online OEHM courses must be between 30 and 45."
+        );
+      }
+
+      if (
+        onlineOETCourses.length > 5 ||
+        (userSemester !== "VII" && onlineOEHMCourses.length > 5)
+      ) {
+        throw new Error(
+          "You can select at most 5 online courses for each type."
+        );
+      }
+
+      const allOnlineCourseIds = new Set(
+        onlineCourses.map((course) => course.course_id)
+      );
+      if (allOnlineCourseIds.size !== onlineCourses.length) {
+        throw new Error(
+          "A course selected in OET cannot be selected again in OEHM."
+        );
+      }
     }
+
+    // Validate offline courses
+    if (offlineOETCourses.length > 0 || offlineOEHMCourses.length > 0) {
+      const [availableOfflineOETRows] = await connection.query(
+        "SELECT COUNT(*) as count FROM courses_offline WHERE course_type = 'OET' AND semester = ?",
+        [userSemester]
+      );
+      const [availableOfflineOEHMRows] = await connection.query(
+        "SELECT COUNT(*) as count FROM courses_offline WHERE course_type = 'OEHM' AND semester = ?",
+        [userSemester]
+      );
+
+      if (
+        offlineOETCourses.length > 0 &&
+        offlineOETCourses.length !== availableOfflineOETRows[0].count
+      ) {
+        throw new Error(
+          `Please select all available offline OET courses for semester ${userSemester} in order of preference.`
+        );
+      }
+
+      if (
+        userSemester !== "VII" &&
+        offlineOEHMCourses.length > 0 &&
+        offlineOEHMCourses.length !== availableOfflineOEHMRows[0].count
+      ) {
+        throw new Error(
+          `Please select all available offline OEHM courses for semester ${userSemester} in order of preference.`
+        );
+      }
+    }
+
+    // Validate course combination
+    if (userSemester === "VII") {
+      if (onlineOETCourses.length === 0 && offlineOETCourses.length === 0) {
+        throw new Error(
+          "Please select at least one OET course (online or offline) for semester VII."
+        );
+      }
+    } else {
+      const hasOnlineOET = onlineOETCourses.length > 0;
+      const hasOnlineOEHM = onlineOEHMCourses.length > 0;
+      const hasOfflineOET = offlineOETCourses.length > 0;
+      const hasOfflineOEHM = offlineOEHMCourses.length > 0;
+
+      if (
+        !(
+          (hasOnlineOET && hasOnlineOEHM) ||
+          (hasOfflineOET && hasOfflineOEHM) ||
+          (hasOnlineOET && hasOfflineOEHM) ||
+          (hasOfflineOET && hasOnlineOEHM)
+        )
+      ) {
+        throw new Error(
+          "Invalid combination of courses. Please select either:\n" +
+            "1. Online OET and Online OEHM\n" +
+            "2. Offline OET and Offline OEHM\n" +
+            "3. Online OET and Offline OEHM\n" +
+            "4. Offline OET and Online OEHM"
+        );
+      }
+    }
+
+    // Insert courses into the database
+    for (const course of courses) {
+      await connection.query(
+        `INSERT INTO enrollments 
+         (email, course_id, total_hours, mode, type, enrolled_semester, enrolled_academic_year, course_approved) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
+        [
+          userEmail,
+          course.course_id,
+          course.total_hours,
+          course.mode,
+          course.type,
+          userSemester,
+          academicYear,
+        ]
+      );
+    }
+
+    await connection.commit();
+
+    // Send confirmation email asynchronously
+    sendConfirmationEmail(userEmail, userName, courses, connection).catch(
+      (error) => console.error("Error sending confirmation email:", error)
+    );
+
+    res.json({
+      success: true,
+      message:
+        "Enrollment successful. A confirmation email will be sent shortly.",
+    });
   } catch (error) {
+    await connection.rollback();
     console.error("Error processing enrollment:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Enrollment failed",
+      details: error.toString(),
+    });
+  } finally {
+    connection.release();
   }
 });
 
@@ -691,32 +783,57 @@ app.post("/api/submit", isAuthenticated, async (req, res) => {
       [req.user.email, courseId]
     );
 
+    let message;
     if (existingSubmission.length > 0) {
       // Update existing submission
       await connection.query(
         `
-              UPDATE submissions
-              SET submission_link = ?, submission_status = 'Pending'
-              WHERE email = ? AND course_id = ?
-          `,
+        UPDATE submissions
+        SET submission_link = ?, submission_status = 'Pending'
+        WHERE email = ? AND course_id = ?
+        `,
         [submissionLink, req.user.email, courseId]
       );
-
-      res.json({ success: true, message: "Submission updated successfully" });
+      message = "Submission updated successfully";
     } else {
       // Insert new submission
       await connection.query(
         `
-              INSERT INTO submissions (email, course_id, submission_link, submission_status)
-              VALUES (?, ?, ?, 'Pending')
-          `,
+        INSERT INTO submissions (email, course_id, submission_link, submission_status)
+        VALUES (?, ?, ?, 'Pending')
+        `,
         [req.user.email, courseId, submissionLink]
       );
-
-      res.json({ success: true, message: "Submission successful" });
+      message = "Submission successful";
     }
 
+    // Fetch course details
+    const [courseDetails] = await connection.query(
+      `
+      SELECT c.course_name, e.type, e.enrolled_semester
+      FROM courses_online c
+      JOIN enrollments e ON c.course_id = e.course_id
+      WHERE c.course_id = ? AND e.email = ?
+      `,
+      [courseId, req.user.email]
+    );
+
     await connection.commit();
+
+    // Send confirmation email asynchronously
+    sendSubmissionConfirmationEmail(
+      req.user.email,
+      req.user.name,
+      courseDetails[0],
+      submissionLink
+    ).catch((error) =>
+      console.error("Error sending submission confirmation email:", error)
+    );
+
+    res.json({
+      success: true,
+      message: message + ". A confirmation email will be sent shortly.",
+    });
   } catch (error) {
     await connection.rollback();
     console.error("Error submitting:", error);

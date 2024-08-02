@@ -1,0 +1,58 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Onboarding Successful - Course Enrolment Confirmation</title>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 20px;
+      } .logo { text-align: left; margin-bottom: 20px; } .logo img { max-width:
+      235px; } h1 { color: #b7202f; } table { width: 100%; border-collapse:
+      collapse; margin-top: 20px; } th, td { border: 1px solid #ddd; padding:
+      10px; text-align: left; } th { background-color: #f2f2f2; } .footer {
+      margin-top: 20px; font-size: 0.9em; color: #666; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img
+          src="https://lms-kjsce.somaiya.edu/pluginfile.php/1/theme_essential/logo/1716970170/engg-logo.png"
+          alt="KJ Somaiya College Of Engineering"
+        />
+      </div>
+      <h1>Course Enrolment Confirmation</h1>
+      <p>Dear {{userName}},</p>
+      <p>Your enrolment has been recorded successfully. Below is a summary of
+        your enrolment:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Course Name</th>
+            <th>Type</th>
+            <th>Mode</th>
+            <th>Hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each courses}}
+            <tr>
+              <td>{{this.course_name}}</td>
+              <td>{{this.type}}</td>
+              <td>{{this.mode}}</td>
+              <td>{{this.total_hours}}</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      <p>If you have any questions or need to make changes, please reach out to
+        your departmental OET-OEHM coordinators.</p>
+
+      <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+      </div>
+    </div>
+  </body>
+</html>
