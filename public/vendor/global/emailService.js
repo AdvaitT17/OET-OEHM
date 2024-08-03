@@ -44,15 +44,10 @@ const getNewAccessToken = async () => {
   });
 
   try {
-    const { token, refresh_token } = await oauth2Client.getAccessToken();
-    console.log("Access Token:", token); // Log the access token
-    console.log("Refresh Token:", refresh_token); // Log the refresh token
+    const { token } = await oauth2Client.getAccessToken();
     return token;
   } catch (error) {
-    console.error(
-      "Error refreshing access token:",
-      error.response ? error.response.data : error.message
-    );
+    console.error("Error refreshing access token:", error.message);
     throw error;
   }
 };
@@ -61,7 +56,6 @@ const getNewAccessToken = async () => {
 const createTransporter = async () => {
   try {
     const accessToken = await getNewAccessToken();
-    console.log("Generated Access Token:", accessToken);
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -77,10 +71,7 @@ const createTransporter = async () => {
 
     return transporter;
   } catch (error) {
-    console.error(
-      "Error creating transporter:",
-      error.response ? error.response.data : error.message
-    );
+    console.error("Error creating transporter:", error.message);
     throw error;
   }
 };
@@ -103,10 +94,7 @@ const sendEmail = async (to, subject, htmlContent) => {
       });
     });
   } catch (error) {
-    console.error(
-      "Failed to send email after retries:",
-      error.response ? error.response.data : error.message
-    );
+    console.error("Failed to send email after retries:", error.message);
     throw error;
   }
 };
@@ -155,10 +143,7 @@ const sendConfirmationEmail = async (
       htmlContent
     );
   } catch (error) {
-    console.error(
-      "Error sending confirmation email:",
-      error.response ? error.response.data : error.message
-    );
+    console.error("Error sending confirmation email:", error.message);
   }
 };
 
@@ -189,7 +174,7 @@ const sendSubmissionConfirmationEmail = async (
   } catch (error) {
     console.error(
       "Error sending submission confirmation email:",
-      error.response ? error.response.data : error.message
+      error.message
     );
   }
 };
