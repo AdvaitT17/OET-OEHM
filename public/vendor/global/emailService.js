@@ -44,7 +44,9 @@ const getNewAccessToken = async () => {
   });
 
   try {
-    const { token } = await oauth2Client.getAccessToken();
+    const { token, refresh_token } = await oauth2Client.getAccessToken();
+    console.log("Access Token:", token); // Log the access token
+    console.log("Refresh Token:", refresh_token); // Log the refresh token
     return token;
   } catch (error) {
     console.error(
@@ -59,6 +61,7 @@ const getNewAccessToken = async () => {
 const createTransporter = async () => {
   try {
     const accessToken = await getNewAccessToken();
+    console.log("Generated Access Token:", accessToken);
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
