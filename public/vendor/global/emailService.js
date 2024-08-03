@@ -23,6 +23,7 @@ requiredEnvVars.forEach((varName) => {
 // Template caching
 const templateCache = {};
 
+// Compiles and caches Handlebars templates
 const getCompiledTemplate = async (templatePath) => {
   if (!templateCache[templatePath]) {
     const template = await fs.readFile(templatePath, "utf-8");
@@ -31,7 +32,7 @@ const getCompiledTemplate = async (templatePath) => {
   return templateCache[templatePath];
 };
 
-// Token refresh handling
+// Refreshes OAuth2 access token
 const getNewAccessToken = async () => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -46,11 +47,15 @@ const getNewAccessToken = async () => {
     const { token } = await oauth2Client.getAccessToken();
     return token;
   } catch (error) {
-    console.error("Error refreshing access token:", error);
+    console.error(
+      "Error refreshing access token:",
+      error.response ? error.response.data : error.message
+    );
     throw error;
   }
 };
 
+// Creates and returns a nodemailer transporter using OAuth2
 const createTransporter = async () => {
   try {
     const accessToken = await getNewAccessToken();
@@ -69,11 +74,15 @@ const createTransporter = async () => {
 
     return transporter;
   } catch (error) {
-    console.error("Error creating transporter:", error);
+    console.error(
+      "Error creating transporter:",
+      error.response ? error.response.data : error.message
+    );
     throw error;
   }
 };
 
+// Sends an email with retries in case of failure
 const sendEmail = async (to, subject, htmlContent) => {
   const retryOptions = {
     times: 3,
@@ -91,11 +100,15 @@ const sendEmail = async (to, subject, htmlContent) => {
       });
     });
   } catch (error) {
-    console.error("Failed to send email after retries:", error);
+    console.error(
+      "Failed to send email after retries:",
+      error.response ? error.response.data : error.message
+    );
     throw error;
   }
 };
 
+// Sends a confirmation email to the user
 const sendConfirmationEmail = async (
   userEmail,
   userName,
@@ -139,10 +152,14 @@ const sendConfirmationEmail = async (
       htmlContent
     );
   } catch (error) {
-    console.error("Error sending confirmation email:", error);
+    console.error(
+      "Error sending confirmation email:",
+      error.response ? error.response.data : error.message
+    );
   }
 };
 
+// Sends a submission confirmation email to the user
 const sendSubmissionConfirmationEmail = async (
   userEmail,
   userName,
@@ -167,7 +184,10 @@ const sendSubmissionConfirmationEmail = async (
       htmlContent
     );
   } catch (error) {
-    console.error("Error sending submission confirmation email:", error);
+    console.error(
+      "Error sending submission confirmation email:",
+      error.response ? error.response.data : error.message
+    );
   }
 };
 

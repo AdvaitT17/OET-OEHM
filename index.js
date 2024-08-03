@@ -32,7 +32,7 @@ const pool = mysql.createPool({ ...dbConfig });
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.GOOGLE_CLIENT_SECRET,
     resave: false,
     saveUninitialized: false,
   })
