@@ -438,23 +438,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     summaryContainer.appendChild(courseCardsContainer);
-
-    const buttonContainer = document.createElement("div");
-    buttonContainer.className = "button-container";
-
-    const previousButton = document.createElement("button");
-    previousButton.className = "form-wizard-button form-wizard-previous-btn";
-    previousButton.textContent = "Previous";
-    previousButton.addEventListener("click", goToPreviousStep);
-    buttonContainer.appendChild(previousButton);
-
-    const submitButton = document.createElement("button");
-    submitButton.className = "form-wizard-button form-wizard-submit";
-    submitButton.textContent = "Submit";
-    submitButton.addEventListener("click", enrollCourses);
-    buttonContainer.appendChild(submitButton);
-
-    summaryContainer.appendChild(buttonContainer);
   }
 
   async function updateUserData(data) {
