@@ -5,6 +5,7 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const mysql = require("mysql2/promise");
 const path = require("path");
+const helmet = require("helmet");
 const { body, validationResult } = require("express-validator");
 const crypto = require("crypto");
 const {
@@ -16,6 +17,9 @@ const {
 
 const app = express();
 app.use(express.json());
+
+// enabling the Helmet middleware
+app.use(helmet());
 const PORT = process.env.PORT;
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
@@ -27,18 +31,50 @@ const dbConfig = {
   database: process.env.DB_NAME,
 };
 
-const pool = mysql.createPool({ ...dbConfig });
+const pool = mysql.createPool({
+  ...dbConfig,
+  connectionLimit: 20,
+  queueLimit: 0,
+  connectTimeout: 10000, // 10 seconds
+});
 
 app.use(express.urlencoded({ extended: true }));
+// Improved in-memory session configuration
 app.use(
   session({
-    secret: process.env.GOOGLE_CLIENT_SECRET,
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
   })
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
+        styleSrcElem: [
+          "'self'",
+          "https://fonts.googleapis.com",
+          "'unsafe-inline'",
+        ],
+        imgSrc: ["'self'", "data:", "https://lh3.googleusercontent.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        connectSrc: ["'self'"],
+      },
+    },
+  })
+);
 
 const reonboardingFlags = new Map();
 
@@ -315,7 +351,6 @@ app.get("/user", isAuthenticated, async (req, res) => {
     if (!userData) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-
     res.json({ user: userData });
   } catch (err) {
     console.error("Error fetching user data:", err);
@@ -949,6 +984,23 @@ app.use(express.static(path.join(__dirname, "public")));
 // Route to handle 404 errors
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, "/public/404.html"));
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  // Log the error for debugging purposes
+  console.error("Error:", err.message);
+  console.error("Stack:", err.stack);
+
+  // Destroy the session to ensure clean state
+  req.session.destroy((sessionErr) => {
+    if (sessionErr) {
+      console.error("Session destruction error:", sessionErr);
+    }
+
+    // Redirect to login page
+    res.redirect("/login");
+  });
 });
 
 app.listen(PORT);
