@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Update progress text
       document.getElementById(
         "progressText"
-      ).textContent = `${progress.completed} out of ${progress.total} online courses completed`;
+      ).textContent = `${progress.completed} out of ${progress.total} courses completed`;
 
       // Update the progress chart
       updateProgressChart(progress.percentage);
