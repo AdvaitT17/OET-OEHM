@@ -35,7 +35,7 @@ const pool = mysql.createPool({
   ...dbConfig,
   connectionLimit: 20,
   queueLimit: 0,
-  connectTimeout: 10000, // 10 seconds
+  connectTimeout: 5000, // 10 seconds
 });
 
 app.use(express.urlencoded({ extended: true }));
@@ -986,21 +986,39 @@ app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, "/public/404.html"));
 });
 
-// Global error handler
+// Global Error Handler
 app.use((err, req, res, next) => {
-  // Log the error for debugging purposes
   console.error("Error:", err.message);
   console.error("Stack:", err.stack);
 
-  // Destroy the session to ensure clean state
-  req.session.destroy((sessionErr) => {
-    if (sessionErr) {
-      console.error("Session destruction error:", sessionErr);
-    }
+  if (req.session) {
+    req.session.destroy((sessionErr) => {
+      if (sessionErr) {
+        console.error("Session destruction error:", sessionErr);
+      }
 
-    // Redirect to login page
-    res.redirect("/login");
-  });
+      // Differentiating error handling for API vs. web clients
+      if (
+        req.headers.accept &&
+        req.headers.accept.includes("application/json")
+      ) {
+        res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
+      } else {
+        res.redirect("/login");
+      }
+    });
+  } else {
+    // Handle cases with no session differently for API vs. web clients
+    if (req.headers.accept && req.headers.accept.includes("application/json")) {
+      res
+        .status(500)
+        .json({ success: false, message: "Internal Server Error" });
+    } else {
+      res.redirect("/login");
+    }
+  }
 });
 
 app.listen(PORT);
