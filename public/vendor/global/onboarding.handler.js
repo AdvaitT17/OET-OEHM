@@ -1,4 +1,21 @@
 document.addEventListener("DOMContentLoaded", async function () {
+  toastr.options = {
+    closeButton: false,
+    debug: false,
+    newestOnTop: false,
+    progressBar: false,
+    positionClass: "toast-bottom-right",
+    preventDuplicates: false,
+    onclick: null,
+    showDuration: "300",
+    hideDuration: "1000",
+    timeOut: "5000",
+    extendedTimeOut: "1000",
+    showEasing: "swing",
+    hideEasing: "linear",
+    showMethod: "fadeIn",
+    hideMethod: "fadeOut",
+  };
   if (typeof $.fn.DataTable === "undefined") {
     console.error(
       "DataTables is not loaded. Please check if the library is properly included."
@@ -162,13 +179,6 @@ document.addEventListener("DOMContentLoaded", async function () {
               return data ? data : "Not selected";
             },
           },
-          {
-            data: "previously_taken",
-            title: "Status",
-            render: function (data, type, row) {
-              return data ? "Previously Taken" : "Available";
-            },
-          },
         ];
 
     const dataTable = $table.DataTable({
@@ -177,7 +187,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       responsive: true,
       scrollX: false,
       autoWidth: false,
-      pageLength: 5,
+      pageLength: 10,
       lengthMenu: [
         [5, 10, 25, -1],
         [5, 10, 25, "All"],
@@ -194,11 +204,22 @@ document.addEventListener("DOMContentLoaded", async function () {
           $(row).addClass("disabled");
         }
       },
+      drawCallback: function (settings) {
+        if (isOnline) {
+          updateTotalHoursFooter(this.api(), tableId);
+        }
+      },
+      footerCallback: function (row, data, start, end, display) {
+        if (isOnline) {
+          updateTotalHoursFooter(this.api(), tableId);
+        }
+      },
     });
 
     $table.off("click", "tbody tr").on("click", "tbody tr", function () {
+      if ($(this).hasClass("disabled")) return;
+
       const data = dataTable.row(this).data();
-      if (data.previously_taken) return;
 
       if (isOnline) {
         if ($(this).hasClass("selected")) {
@@ -206,6 +227,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           selectedCourses = selectedCourses.filter(
             (course) => course.course_id !== data.course_id
           );
+          toastr.warning(`Course deselected: ${data.course_name}`);
         } else {
           $(this).addClass("selected");
           selectedCourses.push({
@@ -213,7 +235,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             mode: "online",
             type: tableId === "#OETCoursesTable" ? "OET" : "OEHM",
           });
+          toastr.success(`Course selected: ${data.course_name}`);
         }
+        updateTotalHoursFooter(dataTable, tableId);
       } else {
         const courseArray =
           data.course_type === "OET"
@@ -225,6 +249,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (index !== -1) {
           courseArray.splice(index, 1);
+          toastr.warning(`Course deselected: ${data.course_name}`);
         } else {
           courseArray.push({
             ...data,
@@ -232,6 +257,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             mode: "offline",
             type: data.course_type,
           });
+          toastr.success(`Course selected: ${data.course_name}`);
         }
 
         courseArray.forEach((course, index) => {
@@ -258,6 +284,37 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     return dataTable;
+  }
+
+  function updateTotalHoursFooter(api, tableId) {
+    const selectedRows = api.rows(".selected").data();
+    let totalHours = 0;
+    selectedRows.each(function (rowData) {
+      totalHours += parseInt(rowData.hours) || 0;
+    });
+
+    const $tfoot = $(tableId).find("tfoot");
+    if (selectedRows.length > 0) {
+      if ($tfoot.length === 0) {
+        $(tableId).append("<tfoot><tr></tr></tfoot>");
+      }
+      const columnCount = api.columns().nodes().length;
+      const $tfootRow = $(tableId).find("tfoot tr");
+      $tfootRow.empty();
+
+      // Add empty cells for all columns except the last one
+      for (let i = 0; i < columnCount - 1; i++) {
+        $tfootRow.append("<th></th>");
+      }
+
+      // Add the total hours in the last column with inline styling
+      $tfootRow.append(
+        `<th style="text-align: right; white-space: nowrap;">Total Hours: ${totalHours}</th>`
+      );
+      $tfoot.show();
+    } else {
+      $tfoot.hide();
+    }
   }
 
   async function setupTable(tableId) {
