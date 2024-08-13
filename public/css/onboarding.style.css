@@ -530,3 +530,13 @@ input:checked + .slider:before {
 .content-center-body {
   text-align: center;
 }
+
+table.dataTable tfoot {
+  font-size: 1.2em;
+  text-align: right;
+}
+
+table.dataTable tfoot th {
+  text-align: right;
+  white-space: nowrap; /* Prevents text from wrapping to the next line */
+}
