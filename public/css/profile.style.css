@@ -11665,7 +11665,7 @@ label {
   /*  background:var(--headerbg); */
   z-index: 3;
   padding-left: 18.563rem;
-  padding-right: 100px;
+  padding-right: 0;
   padding-top: 0rem;
   transition: all 0.2s ease;
 }
@@ -15515,7 +15515,7 @@ html[dir="rtl"]
   margin-left: 18.563rem;
   z-index: 0;
   transition: all 0.2s ease;
-  padding-right: 5.625rem;
+  padding-right: 0;
 }
 @media only screen and (max-width: 87.5rem) {
   .content-body {
