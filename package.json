@@ -33,7 +33,7 @@
     "winston": "^3.13.1"
   },
   "devDependencies": {
-    "browser-sync": "^3.0.2",
+    "browser-sync": "^3.0.4",
     "gulp": "^5.0.0",
     "gulp-sass": "^5.1.0",
     "sass": "^1.54.4"
