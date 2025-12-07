@@ -4,7 +4,7 @@ The development repository for the official website of KJSCE OET-OEHM Portal
 
 ## Website
 
-Visit this website [here](https://oet-oehm-preprod-ingvj2pida-el.a.run.app/)
+Visit this website [here](https://oet-oehm-f8d4hdgre5g7exgz.centralindia-01.azurewebsites.net/)
 
 ## Author
 
