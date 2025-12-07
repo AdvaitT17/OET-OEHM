@@ -25,7 +25,7 @@
     "knex": "^3.1.0",
     "mysql2": "^3.9.8",
     "node-cron": "^3.0.3",
-    "nodemailer": "^6.9.14",
+    "nodemailer": "^7.0.11",
     "open": "^10.1.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
